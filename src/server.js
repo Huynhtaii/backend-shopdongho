@@ -3,7 +3,7 @@ import bodyParser from "body-parser"; //lấý dữ liệu như id , dùng query
 import configViewEngine from "./configs/viewEngine";
 import initWebRoutes from "./Routes/web";
 import Connection from "./configs/connectdb";
-
+import initAPIRoutes from "./Routes/api";
 require("dotenv").config();
 
 let app = express();
@@ -13,6 +13,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //test Connection db
 Connection();
+initAPIRoutes(app);
 initWebRoutes(app);
 let port = process.env.PORT || 6969;
 app.listen(port, () => {
