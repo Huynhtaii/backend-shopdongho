@@ -1,13 +1,20 @@
 import db from "../models";
-const getAllProducts = async () => {
+const getAllProducts = async (limit) => {
   try {
-    const products = await db.Product.findAll({
+    let options = {
       include: [
         {
           model: db.ProductImage,
         },
-      ],
-    });
+      ]
+    };
+
+    if (limit) {
+      options.limit = parseInt(limit);
+    }
+
+    const products = await db.Product.findAll(options);
+    
     if (!products) {
       return {
         EM: "product not found",
@@ -16,7 +23,7 @@ const getAllProducts = async () => {
       };
     }
     return {
-      EM: "Get list product success",
+      EM: "Get list product success", 
       EC: "0",
       DT: products,
     };
@@ -24,11 +31,12 @@ const getAllProducts = async () => {
     console.log(error);
     return {
       EM: "error from service",
-      EC: "-1",
+      EC: "-1", 
       DT: "",
     };
   }
 };
+
 const getProductById = async (id) => {
   try {
     const product = await db.Product.findByPk(id, {

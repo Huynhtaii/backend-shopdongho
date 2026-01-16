@@ -2,13 +2,16 @@ import express from "express";
 import bodyParser from "body-parser"; //lấý dữ liệu như id , dùng query param
 import configViewEngine from "./configs/viewEngine";
 import initWebRoutes from "./Routes/web";
-import Connection from "./configs/connectdb";
+import Connection from "./configs/connectDB";
 import initAPIRoutes from "./Routes/api";
+import configCors from "./configs/cors";
 require("dotenv").config();
 
 let app = express();
 //config app
 configViewEngine(app);
+//config cors
+configCors(app);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 //test Connection db
