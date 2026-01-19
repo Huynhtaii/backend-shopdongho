@@ -8,8 +8,11 @@ const initAPIRoutes = (app) => {
   //API CỦA SẢN PHẨM
   router.get("/read-all/products", productController.getAllProducts); //lấy lên toàn bộ sản phẩm
   router.get("/product/:id", productController.getProductById); //lấy lên sản phẩm theo id
-  
- //API CỦA USER
+  // lấy danh sách sản phẩm theo loại sản phẩm có limit và orderby create_at
+  router.get("/read-product-by-categories/:id", productController.getProductByCategories)
+  //lấy tất cả danh sách sản phẩm theo loại có phân trang
+  router.get("/read-product-by-categories-with-pagination",productController.getProductByCategoriesWithPaginate )
+ //API Của USER
  router.get("/read-all/user")
   return app.use("/api/v1/", router);
 };
