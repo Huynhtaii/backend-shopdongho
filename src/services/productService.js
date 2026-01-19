@@ -14,7 +14,7 @@ const getAllProducts = async (limit) => {
     }
 
     const products = await db.Product.findAll(options);
-    
+
     if (!products) {
       return {
         EM: "product not found",
@@ -23,7 +23,7 @@ const getAllProducts = async (limit) => {
       };
     }
     return {
-      EM: "Get list product success", 
+      EM: "Get list product success",
       EC: "0",
       DT: products,
     };
@@ -31,7 +31,7 @@ const getAllProducts = async (limit) => {
     console.log(error);
     return {
       EM: "error from service",
-      EC: "-1", 
+      EC: "-1",
       DT: "",
     };
   }
@@ -70,13 +70,16 @@ const getProductById = async (id) => {
     };
   }
 };
-const getProductByCategories = async (id) => {
+const getProductByCategories = async (name) => {
   try {
     const products = await db.Product.findAll({
       include: [
         {
+          model: db.ProductImage,
+        },
+        {
           model: db.Category,
-          where: { category_id: id },
+          where: { name: name },
           through: { attributes: [] }
         }
       ],
@@ -104,34 +107,74 @@ const getProductByCategories = async (id) => {
     };
   }
 };
-const getProductByCategoriesWithPaginate = async (page, limit) => {
-    try {
-      let offset = (page - 1) * limit; 
-     
-      const { rows, count } = await db.Product.findAndCountAll({
-        include: [
-         {
-           model: db.Category
-         }
-        ],
-        limit: limit,
-        offset: offset,
-      })
-      return {
-        EM: "Get all product successfully",
-        EC: 0,
-        DT: {
-          totalRows: count,  //tổng số sản phẩm hiện tại trong db
-          totalPages: Math.ceil(count / limit),  //tính toán số nút trang 
-          product: rows,    //toàn bộ sản phẩm
+
+const getResentProducts = async (arrId) => {
+  try {
+    const products = await db.Product.findAll({
+      include: [
+        {
+          model: db.ProductImage,
         },
+        {
+          model: db.Category,
+        }
+      ],
+    });
+
+    const recentProduct = products.filter((product) => {
+      return arrId.includes(product.product_id + '')
+    })
+
+    if (!recentProduct) {
+      return {
+        EM: "product not found",
+        EC: "0",
+        DT: [],
       };
-    } catch (error) {
-      return{
-        EM: "error from service",
-        EC: "-1",
-        DT: "",
-      }
     }
+    return {
+      EM: "Get product by categories success",
+      EC: "0",
+      DT: recentProduct,
+    };
+  } catch (error) {
+    console.log(error);
+    return {
+      EM: "error from service",
+      EC: "-1",
+      DT: "",
+    };
+  }
+};
+
+const getProductByCategoriesWithPaginate = async (page, limit) => {
+  try {
+    let offset = (page - 1) * limit;
+
+    const { rows, count } = await db.Product.findAndCountAll({
+      include: [
+        {
+          model: db.Category
+        }
+      ],
+      limit: limit,
+      offset: offset,
+    })
+    return {
+      EM: "Get all product successfully",
+      EC: 0,
+      DT: {
+        totalRows: count,  //tổng số sản phẩm hiện tại trong db
+        totalPages: Math.ceil(count / limit),  //tính toán số nút trang 
+        product: rows,    //toàn bộ sản phẩm
+      },
+    };
+  } catch (error) {
+    return {
+      EM: "error from service",
+      EC: "-1",
+      DT: "",
+    }
+  }
 }
-export default { getAllProducts, getProductById, getProductByCategories ,getProductByCategoriesWithPaginate};
+export default { getAllProducts, getProductById, getProductByCategories, getProductByCategoriesWithPaginate, getResentProducts };
