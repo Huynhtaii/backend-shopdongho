@@ -1,7 +1,7 @@
-import userService from '../services/userService';
-const getAllUsers = async (req, res) => {
+import orderService from '../services/orderService';
+const getAllOrders = async (req, res) => {
    try {
-      const data = await userService.getAllUsers();
+      const data = await orderService.getAllOrders();
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
@@ -16,12 +16,10 @@ const getAllUsers = async (req, res) => {
       });
    }
 };
-const getUserById = async (req, res) => {
+const getOrderById = async (req, res) => {
    try {
       const { id } = req.params;
-      console.log('>>>>>id in cotroller', id);
-      const data = await userService.getUserById(id);
-      console.log('>>>>>data', data);
+      const data = await orderService.getOrderById(id);
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
@@ -36,9 +34,9 @@ const getUserById = async (req, res) => {
       });
    }
 };
-const createUser = async (req, res) => {
+const createOrder = async (req, res) => {
    try {
-      const data = await userService.createUser(req.body);
+      const data = await orderService.createOrder(req.body);
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
@@ -53,10 +51,10 @@ const createUser = async (req, res) => {
       });
    }
 };
-const updateUser = async (req, res) => {
+const updateOrder = async (req, res) => {
    try {
       const { id } = req.params;
-      const data = await userService.updateUser(id, req.body);
+      const data = await orderService.updateOrder(id, req.body);
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
@@ -71,10 +69,10 @@ const updateUser = async (req, res) => {
       });
    }
 };
-const deleteUser = async (req, res) => {
+const deleteOrder = async (req, res) => {
    try {
       const { id } = req.params;
-      const data = await userService.deleteUser(id);
+      const data = await orderService.deleteOrder(id);
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
@@ -90,9 +88,9 @@ const deleteUser = async (req, res) => {
    }
 };
 export default {
-   getAllUsers,
-   getUserById,
-   createUser,
-   updateUser,
-   deleteUser,
+   getAllOrders,
+   getOrderById,
+   createOrder,
+   updateOrder,
+   deleteOrder,
 };
