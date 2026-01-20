@@ -1,5 +1,6 @@
 import express from "express";
 import bodyParser from "body-parser"; //lấý dữ liệu như id , dùng query param
+import path from "path";
 import configViewEngine from "./configs/viewEngine";
 import initWebRoutes from "./Routes/web";
 import Connection from "./configs/connectDB";
@@ -14,6 +15,12 @@ configViewEngine(app);
 configCors(app);
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+
+// Phục vụ tĩnh thư mục uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+
 //test Connection db
 Connection();
 initAPIRoutes(app);
