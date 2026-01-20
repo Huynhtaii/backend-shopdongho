@@ -31,6 +31,7 @@ module.exports = {
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
+        defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
       },
       brand_id: {
         type: Sequelize.INTEGER,

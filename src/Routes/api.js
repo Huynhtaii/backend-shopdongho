@@ -3,6 +3,7 @@ import userController from '../controller/userController';
 import productController from '../controller/productController';
 import categoryController from '../controller/categoryController';
 import orderController from '../controller/orderController';
+import { upload } from '../middleware/uploadImage';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -30,7 +31,7 @@ const initAPIRoutes = (app) => {
    //API CỦA PRODUCT
    //  router.get('/read-all/products', productController.getAllProducts); đã có
    // router.get('/product/:id', productController.getProductById); lấy lên sản phẩm theo id
-   router.post('/create/product', productController.createProduct);
+   router.post('/create/product', upload.single('images'), productController.createProduct);
    router.put('/update/product/:id', productController.updateProduct);
    router.delete('/delete/product/:id', productController.deleteProduct);
    //API CỦA CATEGORY
@@ -48,6 +49,9 @@ const initAPIRoutes = (app) => {
 
    //api search product
    router.get('/product-search', productController.searchProduct);
+
+   //api upload ảnh
+   // router.post('/upload', upload.single('image'), uploadImage);
    return app.use('/api/v1/', router);
 };
 
