@@ -9,7 +9,7 @@ require("dotenv").config();
 
 let app = express();
 //config app
-configViewEngine(app);
+configViewEngine(app); 
 //config cors
 configCors(app);
 app.use(bodyParser.json());
