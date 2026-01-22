@@ -4,6 +4,8 @@ import productController from '../controller/productController';
 import categoryController from '../controller/categoryController';
 import orderController from '../controller/orderController';
 import { upload } from '../middleware/uploadImage';
+import roleCotroller from '../controller/roleController';
+import loginRegisterController from '../controller/loginRegisterController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -46,12 +48,16 @@ const initAPIRoutes = (app) => {
    router.post('/create/order', orderController.createOrder);
    router.put('/update/order/:id', orderController.updateOrder);
    router.delete('/delete/order/:id', orderController.deleteOrder);
-
-   //api search product
+   //API CỦA ROLE
+   router.get('/read-all/roles', roleCotroller.getAllRoles);
+   //API search product
    router.get('/product-search', productController.searchProduct);
 
-   //api upload ảnh
-   // router.post('/upload', upload.single('image'), uploadImage);
+   //API Đăng Ký
+   router.post('/register', loginRegisterController.handleRegister);
+   //API ĐĂNG NHẬP
+   router.post('/login', loginRegisterController.handleLogin);
+
    return app.use('/api/v1/', router);
 };
 
