@@ -3,9 +3,6 @@ import userController from '../controller/userController';
 import productController from '../controller/productController';
 import categoryController from '../controller/categoryController';
 import orderController from '../controller/orderController';
-import { upload } from '../middleware/uploadImage';
-import roleCotroller from '../controller/roleController';
-import loginRegisterController from '../controller/loginRegisterController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -33,7 +30,7 @@ const initAPIRoutes = (app) => {
    //API CỦA PRODUCT
    //  router.get('/read-all/products', productController.getAllProducts); đã có
    // router.get('/product/:id', productController.getProductById); lấy lên sản phẩm theo id
-   router.post('/create/product', upload.single('images'), productController.createProduct);
+   router.post('/create/product', productController.createProduct);
    router.put('/update/product/:id', productController.updateProduct);
    router.delete('/delete/product/:id', productController.deleteProduct);
    //API CỦA CATEGORY
@@ -47,17 +44,11 @@ const initAPIRoutes = (app) => {
    router.get('/order/:id', orderController.getOrderById);
    router.post('/create/order', orderController.createOrder);
    router.put('/update/order/:id', orderController.updateOrder);
+   router.put('/update/order-status/:id', orderController.updateOrderStatus);
    router.delete('/delete/order/:id', orderController.deleteOrder);
-   //API CỦA ROLE
-   router.get('/read-all/roles', roleCotroller.getAllRoles);
-   //API search product
+
+   //api search product
    router.get('/product-search', productController.searchProduct);
-
-   //API Đăng Ký
-   router.post('/register', loginRegisterController.handleRegister);
-   //API ĐĂNG NHẬP
-   router.post('/login', loginRegisterController.handleLogin);
-
    return app.use('/api/v1/', router);
 };
 

@@ -69,6 +69,26 @@ const updateOrder = async (req, res) => {
       });
    }
 };
+const updateOrderStatus = async (req, res) => {
+   try {
+      const { id } = req.params;
+      const { status } = req.body; 
+      
+      const data = await orderService.updateOrderStatus(id, status);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: data.DT,
+      });
+   } catch (error) {
+      console.log(error);
+      return res.status(500).json({
+         EM: 'error from server',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
 const deleteOrder = async (req, res) => {
    try {
       const { id } = req.params;
@@ -93,4 +113,5 @@ export default {
    createOrder,
    updateOrder,
    deleteOrder,
+   updateOrderStatus,
 };

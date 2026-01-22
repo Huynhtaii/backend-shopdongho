@@ -1,10 +1,15 @@
+import { where } from 'sequelize';
 import db from '../models';
+import { name } from 'ejs';
 const getAllProducts = async (limit) => {
    try {
       let options = {
          include: [
             {
                model: db.ProductImage,
+            },
+            {
+               model: db.Category,
             },
          ],
       };
@@ -147,29 +152,56 @@ const getResentProducts = async (arrId) => {
    }
 };
 
-const getProductByCategoriesWithPaginate = async (page, limit) => {
+const getProductByCategoriesWithPaginate = async (page, limit, categoryName, filter) => {
    try {
       let offset = (page - 1) * limit;
 
-      const { rows, count } = await db.Product.findAndCountAll({
+      // Điều kiện lọc theo category (nếu không phải "all")
+      const whereCategory = categoryName !== "all" ? { name: categoryName } : {};
+
+      // Điều kiện lọc sản phẩm
+      let whereProduct = {};
+
+      if (filter?.price !== "all") {
+         const priceS = filter.price.split('-')
+         whereProduct.price = {
+            [db.Sequelize.Op.between]: [priceS[0], priceS[1]], // Lọc theo khoảng giá
+         };
+      }
+
+      if (filter?.rating !== "all") {
+         whereProduct.rating = {
+            [db.Sequelize.Op.eq]: parseInt(filter.rating), // Lọc sản phẩm có rating >= filter.rating
+         };
+      }
+
+      const { rows } = await db.Product.findAndCountAll({
+         where: whereProduct, // Áp dụng bộ lọc sản phẩm
          include: [
             {
                model: db.Category,
+               where: whereCategory,
+               required: categoryName !== "all",
             },
+            {
+               model: db.ProductImage,
+            }
          ],
          limit: limit,
          offset: offset,
       });
+
       return {
          EM: 'Get all product successfully',
          EC: 0,
          DT: {
-            totalRows: count, //tổng số sản phẩm hiện tại trong db
-            totalPages: Math.ceil(count / limit), //tính toán số nút trang
-            product: rows, //toàn bộ sản phẩm
+            totalRows: rows.length,
+            totalPages: Math.ceil(rows.length / limit),
+            product: rows,
          },
       };
    } catch (error) {
+      console.error(error);
       return {
          EM: 'error from service',
          EC: '-1',
@@ -177,44 +209,20 @@ const getProductByCategoriesWithPaginate = async (page, limit) => {
       };
    }
 };
+
 const createProduct = async (product) => {
    try {
-      // Tạo transaction để đảm bảo tính nhất quán của dữ liệu
-      const result = await db.sequelize.transaction(async (t) => {
-         // Tạo sản phẩm mới
-         const newProduct = await db.Product.create({
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            discount_price: product.discount_price,
-            rating: product.rating,
-            created_at: product.created_at,
-            brand_id: product.brand_id,
-            sku: product.sku,
-         }, { transaction: t });
-
-         // Tạo bản ghi trong product_images
-         if (product.imageUrl) {
-            await db.ProductImage.create({
-               url: product.imageUrl,
-               product_id: newProduct.product_id
-            }, { transaction: t });
-         }
-
-         return newProduct;
-      });
-
+      const newProduct = await db.Product.create(product);
       return {
          EM: 'Create product successfully',
          EC: 0,
-         DT: result
+         DT: newProduct,
       };
    } catch (error) {
-      console.log('Error:', error);
       return {
          EM: 'error from service',
          EC: '-1',
-         DT: ''
+         DT: '',
       };
    }
 };

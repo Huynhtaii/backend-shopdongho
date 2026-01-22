@@ -1,7 +1,13 @@
 import db from '../models/index';
 const getAllOrders = async () => {
    try {
-      const orders = await db.Order.findAll();
+      const orders = await db.Order.findAll({
+         include:[
+            {
+               model:db.OrderItem
+            }
+         ]
+      });
       if (!orders) {
          return {
             EM: 'orders not found',
@@ -130,6 +136,43 @@ const updateOrder = async (id, data) => {
       };
    }
 };
+const updateOrderStatus = async (id, status) => {
+   try {
+      const order = await db.Order.findByPk(id);
+      if (!order) {
+         return {
+            EM: 'Order not found',
+            EC: '0',
+            DT: [],
+         };
+      }
+
+      // Nếu trạng thái không thay đổi, không cần update
+      if (order.status === status) {
+         return {
+            EM: 'Status is already up to date',
+            EC: '0',
+            DT: order,
+         };
+      }
+
+      // Cập nhật trạng thái đơn hàng
+      await order.update({ status });
+
+      return {
+         EM: 'Update order status success',
+         EC: '0',
+         DT: order,
+      };
+   } catch (error) {
+      console.log(error);
+      return {
+         EM: 'Error from service',
+         EC: '-1',
+         DT: '',
+      };
+   }
+};
 const deleteOrder = async (id) => {
    try {
       const order = await db.Order.findByPk(id);
@@ -162,4 +205,5 @@ export default {
    createOrder,
    updateOrder,
    deleteOrder,
+   updateOrderStatus,
 };
