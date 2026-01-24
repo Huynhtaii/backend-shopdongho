@@ -105,17 +105,41 @@ const getProductByCategoriesWithPaginate = async (req, res) => {
 const createProduct = async (req, res) => {
    try {
       const product = req.body;
+      // Nếu có file ảnh, tạo URL và thêm vào product
+      if (req.file) {
+         const imageUrl = `http://localhost:6969/uploads/product/${req.file.filename}`;
+         product.imageUrl = imageUrl;
+      } else {
+         return res.status(400).json({
+            EM: 'Vui lòng upload ảnh sản phẩm!',
+            EC: '-1',
+            DT: ''
+         });
+      }
+
+      // Chuyển đổi các giá trị từ string sang số nếu cần
+      product.price = parseFloat(product.price);
+      product.discount_price = parseFloat(product.discount_price);
+      product.rating = parseInt(product.rating);
+      product.brand_id = parseInt(product.brand_id);
+
+      // Gọi service để tạo sản phẩm
       const data = await productService.createProduct(product);
+
       return res.status(200).json({
          EM: data.EM,
          EC: data.EC,
-         DT: data.DT,
+         DT: {
+            product: data.DT,
+            imageUrl: product.imageUrl
+         }
       });
    } catch (error) {
+      console.error('Create product error:', error);
       return res.status(500).json({
          EM: 'error from server',
          EC: '-1',
-         DT: '',
+         DT: ''
       });
    }
 };
@@ -171,7 +195,7 @@ const searchProduct = async (req, res) => {
       return res.status(200).json({
          EM: 'Search successful',
          EC: '0',
-         DT: products,
+         DT: products.DT,
       });
    } catch (error) {
       console.log(error);
