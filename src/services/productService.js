@@ -215,23 +215,29 @@ const createProduct = async (product) => {
       // Tạo transaction để đảm bảo tính nhất quán của dữ liệu
       const result = await db.sequelize.transaction(async (t) => {
          // Tạo sản phẩm mới
-         const newProduct = await db.Product.create({
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            discount_price: product.discount_price,
-            rating: product.rating,
-            created_at: product.created_at,
-            brand_id: product.brand_id,
-            sku: product.sku,
-         }, { transaction: t });
+         const newProduct = await db.Product.create(
+            {
+               name: product.name,
+               description: product.description,
+               price: product.price,
+               discount_price: product.discount_price,
+               rating: product.rating,
+               created_at: product.created_at,
+               brand_id: product.brand_id,
+               sku: product.sku,
+            },
+            { transaction: t },
+         );
 
          // Tạo bản ghi trong product_images
          if (product.imageUrl) {
-            await db.ProductImage.create({
-               url: product.imageUrl,
-               product_id: newProduct.product_id
-            }, { transaction: t });
+            await db.ProductImage.create(
+               {
+                  url: product.imageUrl,
+                  product_id: newProduct.product_id,
+               },
+               { transaction: t },
+            );
          }
 
          if (product.category_id) {
@@ -247,14 +253,14 @@ const createProduct = async (product) => {
       return {
          EM: 'Create product successfully',
          EC: 0,
-         DT: result
+         DT: result,
       };
    } catch (error) {
       console.log('Error:', error);
       return {
          EM: 'error from service',
          EC: '-1',
-         DT: ''
+         DT: '',
       };
    }
 };
@@ -352,8 +358,8 @@ const searchProduct = async (name) => {
       const products = await db.Product.findAll({
          where: {
             name: {
-               [Op.like]: `%${name}%`
-            }
+               [Op.like]: `%${name}%`,
+            },
          },
          include: [
             {

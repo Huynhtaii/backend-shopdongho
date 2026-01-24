@@ -97,7 +97,110 @@ const handleLogin = async (rawData) => {
       };
    }
 };
+const getInforAccount = async (id) => {
+   try {
+      let data = await db.User.findOne({
+         where: {
+            user_id: id,
+         },
+         attributes: ['name', 'email', 'phone', 'address'],
+         include: [
+            {
+               model: db.Order,
+               as: 'orders',
+               attributes: ['order_id', 'order_date', 'status', 'total_amount'],
+               include: [
+                  {
+                     model: db.OrderItem,
+                     as: 'order_items',
+                     attributes: ['quantity', 'price'],
+                     include: [
+                        {
+                           model: db.Product,
+                           attributes: ['name', 'description', 'price', 'discount_price']
+                        }
+                     ]
+                  }
+               ]
+            }
+         ]
+      });
+
+      if (!data) {
+         return {
+            EM: 'User not found',
+            EC: '1',
+            DT: null,
+         };
+      }
+
+      return {
+         EM: 'Get information successfully',
+         EC: '0',
+         DT: data,
+      };
+   } catch (error) {
+      console.log('Error at getInforAccount: ', error);
+      return {
+         EM: 'Error from service',
+         EC: '-2',
+         DT: null,
+      };
+   }
+}
+const updateInforAccount = async (id, data) => {
+   try {
+      const user = await db.User.findByPk(id);
+      if (!user) {
+         return {
+            EM: 'User not found',
+            EC: '1',
+            DT: null,
+         };
+      }
+
+      const { name, phone, address } = data;
+
+      // Kiểm tra dữ liệu có thay đổi hay không
+      if (
+         name === user.name &&
+         phone === user.phone &&
+         address === user.address
+      ) {
+         return {
+            EM: 'Nothing to update',
+            EC: '0',
+            DT: user,
+         };
+      }
+
+      // Chỉ cập nhật khi có thay đổi
+      if (name) user.name = name;
+      if (phone) user.phone = phone;
+      if (address) user.address = address;
+
+      await user.save();
+
+      return {
+         EM: 'Update information successfully',
+         EC: '0',
+         DT: user,
+      };
+   } catch (error) {
+      console.log('Error at updateInforAccount: ', error);
+      return {
+         EM: 'Error from service',
+         EC: '-2',
+         DT: null,
+      };
+   }
+};
+
+
+
 export default {
    handleRegister,
    handleLogin,
+   getInforAccount,
+   updateInforAccount,
 };
