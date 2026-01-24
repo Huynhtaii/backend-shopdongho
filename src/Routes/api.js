@@ -58,6 +58,11 @@ const initAPIRoutes = (app) => {
    router.post('/register', loginRegisterController.handleRegister);
    //API ĐĂNG NHẬP
    router.post('/login', loginRegisterController.handleLogin);
+   //API LẤY THÔNG TIN tài khoản NGƯỜI DÙNG
+   router.get('/read/account-user/:id', loginRegisterController.getInforAccount);
+   //update tài khoản người dùng
+   router.put('/update/account-user/:id', loginRegisterController.updateInforAccount);
+
 
    return app.use('/api/v1/', router);
 };

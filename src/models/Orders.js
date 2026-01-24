@@ -6,7 +6,10 @@ module.exports = (sequelize, DataTypes) => {
       // Liên kết với User
       Order.belongsTo(models.User, { foreignKey: "user_id" });
       // Liên kết với OrderItem
-      Order.hasMany(models.OrderItem, { foreignKey: "order_id" });
+      Order.hasMany(models.OrderItem, {
+        foreignKey: "order_id",
+        as: 'order_items'
+      });
       // Liên kết với Payment
       Order.hasOne(models.Payment, { foreignKey: "order_id" });
       // Liên kết với Feedback
@@ -22,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       order_date: DataTypes.DATE,
       status: DataTypes.ENUM("Pending", "Shipped", "Completed", "Canceled"),
-      total_amount: DataTypes.DECIMAL(10,2),
+      total_amount: DataTypes.DECIMAL(10, 2),
       user_id: DataTypes.INTEGER,
       discount_id: DataTypes.INTEGER,
     },

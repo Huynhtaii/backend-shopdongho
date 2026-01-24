@@ -64,7 +64,60 @@ const handleLogin = async (req, res) => {
       });
    }
 };
+const getInforAccount = async (req, res) => {
+   try {
+      const id = req.params.id;
+      if (!id) {
+         return res.status(200).json({
+            EM: 'Missing required fields',
+            EC: '-1',
+            DT: '',
+         });
+      }
+      let data = await loginRegisterService.getInforAccount(id);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: data.DT,
+      });
+   } catch (error) {
+      console.log('Error at getInforAccount: ', error);
+      return res.status(500).json({
+         EM: 'Internal server error',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
+const updateInforAccount = async (req, res) => {
+   try {
+      const id = req.params.id;
+      const { name, phone, address } = req.body;
+      if (!id) {
+         return res.status(200).json({
+            EM: 'Missing required fields',
+            EC: '-1',
+            DT: '',
+         });
+      }
+      let data = await loginRegisterService.updateInforAccount(id, req.body);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: data.DT,
+      });
+   } catch (error) {
+      console.log('Error at updateInforAccount: ', error);
+      return res.status(500).json({
+         EM: 'Internal server error',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
 export default {
    handleRegister,
    handleLogin,
+   getInforAccount,
+   updateInforAccount,
 };
