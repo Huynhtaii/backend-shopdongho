@@ -8,6 +8,8 @@ const getCartByUserId = async (req, res) => {
             EM: cart.EM,
             EC: cart.EC,
             DT: cart.DT,
+            totalPrice: cart.totalPrice,
+            totalSavings: cart.totalSavings
         });
     } catch (error) {
         return res.status(500).json({
@@ -40,7 +42,8 @@ const createCartItem = async (req, res) => {
 const updateQuantityCartItem = async (req, res) => {
     try {
         const { id } = req.params
-        const { quantity } = req.query.quantity
+        const { quantity } = req.body;
+
         let cart = await cartSevice.updateQuantityCartItem(id, quantity);
         return res.status(200).json({
             EM: cart.EM,

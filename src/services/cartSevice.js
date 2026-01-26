@@ -20,10 +20,31 @@ const getCartByUserId = async (user_id) => {
             ],
             where: { user_id: user_id }
         });
+
+        // Tính tổng giá
+        let totalPrice = 0;// số tiền phải trả
+        let totalSavings = 0;// tổng số tiền chk tính giảm giá
+        data.forEach(cart => {
+            cart.CartItems.forEach(item => {
+                totalPrice += item.quantity * (item.Product.discount_price || item.Product.price);
+            });
+        });
+
+        data.forEach(cart => {
+            cart.CartItems.forEach(item => {
+                if (item.Product.discount_price) {
+                    totalSavings += item.quantity * item.Product.price;
+                }
+            });
+        });
+
+
         return {
             EM: 'Get all cart successfully',
             EC: '0',
             DT: data,
+            totalPrice: totalPrice,
+            totalSavings: totalSavings
         };
     } catch (error) {
         console.error('Get all cart error:', error);
