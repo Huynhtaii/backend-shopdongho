@@ -6,6 +6,7 @@ import orderController from '../controller/orderController';
 import { upload } from '../middleware/uploadImage';
 import roleCotroller from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
+import cartController from '../controller/cartController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -63,6 +64,12 @@ const initAPIRoutes = (app) => {
    //update tài khoản người dùng
    router.put('/update/account-user/:id', loginRegisterController.updateInforAccount);
 
+
+   //API Giỏ hàng
+   router.get('/read/cart/:user_id', cartController.getCartByUserId);
+   router.post('/create/cart-item/:user_id', cartController.createCartItem);
+   router.put('/update/quantity-cart-item/:id', cartController.updateQuantityCartItem);
+   router.delete('/delete/cart-item/:id',cartController.deleteCartItem)
 
    return app.use('/api/v1/', router);
 };

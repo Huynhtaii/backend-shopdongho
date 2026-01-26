@@ -314,6 +314,14 @@ const updateProduct = async (id, data) => {
          where: { product_id: id },
       });
 
+      // Cập nhật category_id nếu có
+      if (data.category_id) {
+         await db.CategoriesHasProducts.update(
+            { categories_category_id: data.category_id },
+            { where: { products_product_id: id } }
+         );
+      }
+
       return {
          EM: 'Update product successfully',
          EC: '0',
