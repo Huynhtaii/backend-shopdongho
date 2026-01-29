@@ -7,71 +7,58 @@ import { upload } from '../middleware/uploadImage';
 import roleCotroller from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
 import jwtAction from '../middleware/jwtAction';
+import cartController from '../controller/cartController';
+
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
-   // GET=>Read , POST =>Create , PUT => Update , DELETE=>Delete
-   // Middleware kiểm tra JWT 
-   app.all("*", jwtAction.checkUserJWT);
-   //API CỦA Người dùng
-   router.get('/read-all/products', productController.getAllProducts); //lấy lên toàn bộ sản phẩm
-   router.get('/recent-products', productController.getResentProducts); //lấy sản phẩm thuộc mảng arrId truyền vào
-   router.get('/product/:id', productController.getProductById); //lấy lên sản phẩm theo id
-   // lấy danh sách sản phẩm theo loại sản phẩm có limit và orderby create_at
-   router.get('/read-product-by-categories/:name', productController.getProductByCategories);
-
-   //Categories
+   // PUBLIC ROUTES (không cần đăng nhập)
+   router.get('/read-all/products', productController.getAllProducts);
+   router.get('/recent-products', productController.getResentProducts);
+   router.get('/product/:id', productController.getProductById);
    router.get('/read-all/categories', categoryController.getAllCategories);
-
-   //lấy tất cả danh sách sản phẩm theo loại có phân trang
+   router.get('/product-search', productController.searchProduct);
+   router.get('/read-product-by-categories/:name', productController.getProductByCategories);
    router.get('/read-product-by-categories-with-pagination', productController.getProductByCategoriesWithPaginate);
 
-   //API CỦA Admin FindAll, findOne, Create, Update, Delete  cho 4 bảng User, Product, Category, Order
-   //API CỦA USER
-   router.get('/read-all/users', userController.getAllUsers);
-   router.get('/read/user/:id', userController.getUserById);
-   router.post('/create/user', userController.createUser);
-   router.put('/update/user/:id', userController.updateUser);
-   router.delete('/delete/user/:id', userController.deleteUser);
-   //API CỦA PRODUCT
-   //  router.get('/read-all/products', productController.getAllProducts); đã có
-   // router.get('/product/:id', productController.getProductById); lấy lên sản phẩm theo id
-   router.post('/create/product', upload.single('images'), productController.createProduct);
-   router.put('/update/product/:id', productController.updateProduct);
-   router.delete('/delete/product/:id', productController.deleteProduct);
-   //API CỦA CATEGORY
-   // router.get('/read-all/categories', categoryController.getAllCategories); đã có
-   router.get('/category/:id', categoryController.getCategoryById);
-   router.post('/create/category', categoryController.createCategory);
-   router.put('/update/category/:id', categoryController.updateCategory);
-   router.delete('/delete/category/:id', categoryController.deleteCategory);
-   //API CỦA ORDER
-   router.get('/read-all/orders', orderController.getAllOrders);
-   router.get('/order/:id', orderController.getOrderById);
-   router.post('/create/order', orderController.createOrder);
-   router.put('/update/order/:id', orderController.updateOrder);
-   router.put('/update/order-status/:id', orderController.updateOrderStatus);
-   router.delete('/delete/order/:id', orderController.deleteOrder);
-   //API CỦA ROLE
-   router.get('/read-all/roles', roleCotroller.getAllRoles);
-   //API search product
-   router.get('/product-search', productController.searchProduct);
-
-   //API Đăng Ký
+   // AUTH ROUTES
    router.post('/register/user', loginRegisterController.handleRegister);
-   //API ĐĂNG NHẬP
    router.post('/login/user', loginRegisterController.handleLogin);
-   //API ĐĂNG XUẤT
    router.post('/logout/user', loginRegisterController.handleLogout);
-   //API LẤY THÔNG TIN tài khoản NGƯỜI DÙNG
-   router.get('/read/account-user/:id', loginRegisterController.getInforAccount);
-   //update tài khoản người dùng
-   router.put('/update/account-user/:id', loginRegisterController.updateInforAccount);
-   //API TÀI KHOẢN NGƯỜI DÙNG để duy trì trạng thái đăng nhập KHI LOAD LẠI TRANG 
-   router.get('/account', loginRegisterController.getAccount);
 
+   // USER PROTECTED ROUTES (cần JWT)
+   router.get('/read/account-user/:id', jwtAction.checkUserJWT, loginRegisterController.getInforAccount);
+   router.put('/update/account-user/:id', jwtAction.checkUserJWT, loginRegisterController.updateInforAccount);
+   router.get('/account', jwtAction.checkUserJWT, loginRegisterController.getAccount);
 
+   // Cart Routes
+   router.get('/read/cart/:user_id', jwtAction.checkUserJWT, cartController.getCartByUserId);
+   router.post('/create/cart-item/:user_id', jwtAction.checkUserJWT, cartController.createCartItem);
+   router.put('/update/quantity-cart-item/:id', jwtAction.checkUserJWT, cartController.updateQuantityCartItem);
+   router.delete('/delete/cart-item/:id', jwtAction.checkUserJWT, cartController.deleteCartItem);
 
+   // Order Routes
+   router.post('/create/order', jwtAction.checkUserJWT, orderController.createOrder);
+
+   // ADMIN ROUTES (cần JWT + role admin)
+   router.get('/read-all/users', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], userController.getAllUsers);
+   router.post('/create/user', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], userController.createUser);
+   router.put('/update/user/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], userController.updateUser);
+   router.delete('/delete/user/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], userController.deleteUser);
+
+   router.post('/create/product', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], upload.single('images'), productController.createProduct);
+   router.put('/update/product/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], productController.updateProduct);
+   router.delete('/delete/product/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], productController.deleteProduct);
+
+   router.post('/create/category', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], categoryController.createCategory);
+   router.put('/update/category/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], categoryController.updateCategory);
+   router.delete('/delete/category/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], categoryController.deleteCategory);
+
+   router.get('/read-all/orders', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], orderController.getAllOrders);
+   router.put('/update/order-status/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], orderController.updateOrderStatus);
+   router.delete('/delete/order/:id', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], orderController.deleteOrder);
+
+   router.get('/read-all/roles', [jwtAction.checkUserJWT, jwtAction.checkAdminRole], roleCotroller.getAllRoles);
 
    return app.use('/api/v1/', router);
 };
