@@ -1,18 +1,18 @@
 import jwt from 'jsonwebtoken';
 require('dotenv').config();
 
-// Định nghĩa các routes không cần xác thực
-const publicRoutes = [
-   "/login",
-   "/register",
-   "/logout/user",
-   "/read-all/products",      // cho phép xem sản phẩm
-   "/recent-products",
-   "/read-all/categories",    // cho phép xem categories
-   "/product/",               // cho phép xem chi tiết sản phẩm
-   "/product-search",         // cho phép tìm kiếm sản phẩm
-   "/read-product-by-categories", // cho phép xem sản phẩm theo category
-   "/read-product-by-categories-with-pagination"
+// Routes không cần xác thực
+const nonSecurePaths = [
+   "/login/user",          // Đăng nhập
+   "/register/user",       // Đăng ký
+   "/logout/user",         // Đăng xuất
+   "/read-all/products",   // Lấy danh sách sản phẩm
+   "/product/:id",         // Chi tiết sản phẩm
+   "/read-all/categories", // Lấy danh sách danh mục
+   "/product-search",      // Tìm kiếm sản phẩm
+   "/recent-products",     // Sản phẩm xem gần đây
+   "/read-product-by-categories/:name", // Sản phẩm theo danh mục
+   "/read-product-by-categories-with-pagination" // Phân trang sản phẩm theo danh mục
 ];
 
 const apiPrefix = "/api/v1";
@@ -46,8 +46,7 @@ const extractToken = (req) => {
 
 const checkUserJWT = (req, res, next) => {
    // Kiểm tra xem path hiện tại có phải là public route không
-   const isPublicRoute = publicRoutes.some(route => {
-      // Kiểm tra cả với prefix và không có prefix
+   const isPublicRoute = nonSecurePaths.some(route => {
       return req.path === route ||
          req.path === apiPrefix + route ||
          req.path.startsWith(apiPrefix + route); // Cho các route có params
@@ -57,7 +56,6 @@ const checkUserJWT = (req, res, next) => {
       return next();
    }
 
-   // Kiểm tra token
    const token = req.cookies?.access_token || extractToken(req);
 
    if (!token) {
@@ -77,7 +75,6 @@ const checkUserJWT = (req, res, next) => {
       });
    }
 
-   // Lưu thông tin user vào request
    req.user = decoded;
    req.token = token;
    next();
@@ -85,7 +82,15 @@ const checkUserJWT = (req, res, next) => {
 
 // Middleware kiểm tra role Admin
 const checkAdminRole = (req, res, next) => {
-   if (req.user && req.user.role_id === 1) { // Giả sử role_id 1 là Admin
+   if (!req.user) {
+      return res.status(401).json({
+         EM: "Vui lòng đăng nhập!",
+         EC: -1,
+         DT: "",
+      });
+   }
+
+   if (req.user.role_id === 1) { // role_id 1 là Admin
       next();
    } else {
       return res.status(403).json({

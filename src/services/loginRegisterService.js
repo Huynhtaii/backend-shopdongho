@@ -80,6 +80,7 @@ const handleLogin = async (rawData) => {
             user_id: user.user_id,
             email: user.email,
             name: user.name,
+            role_id: user.role_id.toString(),
             access_token: token,
          },
       };
