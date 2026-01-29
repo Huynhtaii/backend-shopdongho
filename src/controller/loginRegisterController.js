@@ -43,7 +43,6 @@ const handleLogin = async (req, res) => {
          });
       }
       let data = await loginRegisterService.handleLogin(req.body);
-      console.log('check data>>>>>>>>>>>>>>', data);
       if (data && data.DT && data.DT.access_token) {
          res.cookie('access_token', data.DT.access_token, {
             httpOnly: true,
@@ -64,6 +63,24 @@ const handleLogin = async (req, res) => {
       });
    }
 };
+const handleLogout = async (req, res) => {
+   try {
+      res.clearCookie('access_token');
+      return res.status(200).json({
+         EM: 'Logout successfully',
+         EC: '0',
+         DT: '',
+      });
+   } catch (error) {
+      console.log('Error at handleLogout: ', error);
+      return res.status(500).json({
+         EM: 'Internal server error',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
+
 const getInforAccount = async (req, res) => {
    try {
       const id = req.params.id;
@@ -115,9 +132,30 @@ const updateInforAccount = async (req, res) => {
       });
    }
 };
+const getAccount = async (req, res) => {
+   console.log(">>>>>>>>>>>>>>req.user:", req.user);
+   console.log("Authorization Header:", req.headers.authorization);
+
+   if (!req.user) {
+      return res.status(401).json({ EM: "User not authenticated", EC: -1, DT: "" });
+   }
+
+   return res.status(200).json({
+      EM: "Get User Account OK!",
+      EC: "0",
+      DT: {
+         email: req.user.email,
+         username: req.user.name,
+         role: req.user.role_id,
+         access_token: req.token,
+      },
+   });
+};
 export default {
    handleRegister,
    handleLogin,
    getInforAccount,
    updateInforAccount,
+   handleLogout,
+   getAccount
 };

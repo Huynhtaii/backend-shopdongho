@@ -6,11 +6,13 @@ import orderController from '../controller/orderController';
 import { upload } from '../middleware/uploadImage';
 import roleCotroller from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
-import cartController from '../controller/cartController';
+import jwtAction from '../middleware/jwtAction';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
    // GET=>Read , POST =>Create , PUT => Update , DELETE=>Delete
+   // Middleware kiểm tra JWT 
+   app.all("*", jwtAction.checkUserJWT);
    //API CỦA Người dùng
    router.get('/read-all/products', productController.getAllProducts); //lấy lên toàn bộ sản phẩm
    router.get('/recent-products', productController.getResentProducts); //lấy sản phẩm thuộc mảng arrId truyền vào
@@ -56,20 +58,20 @@ const initAPIRoutes = (app) => {
    router.get('/product-search', productController.searchProduct);
 
    //API Đăng Ký
-   router.post('/register', loginRegisterController.handleRegister);
+   router.post('/register/user', loginRegisterController.handleRegister);
    //API ĐĂNG NHẬP
-   router.post('/login', loginRegisterController.handleLogin);
+   router.post('/login/user', loginRegisterController.handleLogin);
+   //API ĐĂNG XUẤT
+   router.post('/logout/user', loginRegisterController.handleLogout);
    //API LẤY THÔNG TIN tài khoản NGƯỜI DÙNG
    router.get('/read/account-user/:id', loginRegisterController.getInforAccount);
    //update tài khoản người dùng
    router.put('/update/account-user/:id', loginRegisterController.updateInforAccount);
+   //API TÀI KHOẢN NGƯỜI DÙNG để duy trì trạng thái đăng nhập KHI LOAD LẠI TRANG 
+   router.get('/account', loginRegisterController.getAccount);
 
 
-   //API Giỏ hàng
-   router.get('/read/cart/:user_id', cartController.getCartByUserId);
-   router.post('/create/cart-item/:user_id', cartController.createCartItem);
-   router.put('/update/quantity-cart-item/:id', cartController.updateQuantityCartItem);
-   router.delete('/delete/cart-item/:id',cartController.deleteCartItem)
+
 
    return app.use('/api/v1/', router);
 };

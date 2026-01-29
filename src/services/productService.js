@@ -115,42 +115,41 @@ const getProductByCategories = async (name) => {
 
 const getResentProducts = async (arrId) => {
    try {
-      const products = await db.Product.findAll({
-         include: [
-            {
-               model: db.ProductImage,
-            },
-            {
-               model: db.Category,
-            },
-         ],
-      });
-
-      const recentProduct = products.filter((product) => {
-         return arrId.includes(product.product_id + '');
-      });
-
-      if (!recentProduct) {
+      if (!Array.isArray(arrId)) {
+         console.error("arrId không phải là một mảng hoặc bị undefined:", arrId);
          return {
-            EM: 'product not found',
-            EC: '0',
+            EM: "Invalid input data",
+            EC: "-1",
             DT: [],
          };
       }
+
+      const products = await db.Product.findAll({
+         include: [
+            { model: db.ProductImage },
+            { model: db.Category },
+         ],
+      });
+
+      const recentProduct = products.filter((product) =>
+         arrId.includes(String(product.product_id))
+      );
+
       return {
-         EM: 'Get product by categories success',
-         EC: '0',
+         EM: "Get product by categories success",
+         EC: "0",
          DT: recentProduct,
       };
    } catch (error) {
-      console.log(error);
+      console.error(error);
       return {
-         EM: 'error from service',
-         EC: '-1',
-         DT: '',
+         EM: "error from service",
+         EC: "-1",
+         DT: "",
       };
    }
 };
+
 
 const getProductByCategoriesWithPaginate = async (page, limit, categoryName, filter) => {
    try {
@@ -313,14 +312,6 @@ const updateProduct = async (id, data) => {
       const [affectedRows] = await db.Product.update(data, {
          where: { product_id: id },
       });
-
-      // Cập nhật category_id nếu có
-      if (data.category_id) {
-         await db.CategoriesHasProducts.update(
-            { categories_category_id: data.category_id },
-            { where: { products_product_id: id } }
-         );
-      }
 
       return {
          EM: 'Update product successfully',
