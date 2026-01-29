@@ -57,7 +57,7 @@ const getResentProducts = async (req, res) => {
    try {
       const arrId = req.query.arrId;
 
-      const recentProducts = await productService.getResentProducts(arrId);
+      const recentProducts = await productService.getResentProducts(arrId || []);
       return res.status(200).json({
          EM: recentProducts.EM,
          EC: recentProducts.EC,

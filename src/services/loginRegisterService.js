@@ -48,7 +48,6 @@ const handleRegister = async (rawData) => {
    }
 };
 const handleLogin = async (rawData) => {
-   console.log('>>>>>>>>>>>>>rawData', rawData);
    try {
       let user = await db.User.findOne({
          where: {
@@ -62,15 +61,10 @@ const handleLogin = async (rawData) => {
          };
       }
       let checkPassword = bcrypt.compareSync(String(rawData.password), String(user.password));
-      // let checkPassword = rawData.password === user.password;
-
-      console.log('>>>>>>>checkPassword', checkPassword);
-      console.log('>>>>>>>>>rawData.password', rawData.password);
-      console.log('>>>>>>>>>>>>user.password, ', user.password);
       if (checkPassword === false) {
          return {
             EM: 'Email or Password is incorrect', //trả ra chung chung như thế này để hacker không biết email hay password sai mà tập trung tấn công vào
-            EC: '2',
+            EC: '1',
          };
       }
       const payload = {
@@ -79,11 +73,11 @@ const handleLogin = async (rawData) => {
          role_id: user.role_id,
       };
       const token = jwtAction.createJWT(payload);
-      console.log('>>>>>>>>>>>>>token', token);
       return {
          EM: 'Login successfully',
          EC: '0',
          DT: {
+            user_id: user.user_id,
             email: user.email,
             name: user.name,
             access_token: token,
