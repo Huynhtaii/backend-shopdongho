@@ -24,30 +24,4 @@ const verifyJWT = (token) => {
    // console.log("data", data);
    return decoded;
 };
-
-const checkUserJWT = (req, res, next) => {
-   const token = req.headers.authorization?.split(' ')[1];
-   
-   if (!token) {
-      return res.status(401).json({
-         EM: 'No token provided',
-         EC: '-1',
-         DT: '',
-      });
-   }
-
-   const decoded = verifyJWT(token);
-   if (!decoded) {
-      return res.status(401).json({
-         EM: 'Invalid token',
-         EC: '-1',
-         DT: '',
-      });
-   }
-
-   req.user = decoded;
-   req.userId = decoded.id;
-   next();
-};
-
-export default { createJWT, verifyJWT, checkUserJWT };
+export default { createJWT, verifyJWT };

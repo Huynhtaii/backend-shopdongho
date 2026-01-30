@@ -1,5 +1,5 @@
-const { Sequelize } = require('sequelize');
 require('dotenv').config();
+const { Sequelize } = require('sequelize');
 
 // Option 3: Passing parameters separately (other dialects)
 const sequelize = new Sequelize(
@@ -10,9 +10,7 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     dialect: 'mysql'
-  }
-);
-
+  });
 const Connection = async () => {
   try {
     await sequelize.authenticate();

@@ -115,38 +115,9 @@ const updateInforAccount = async (req, res) => {
       });
    }
 };
-const getAccount = async (req, res) => {
-   try {
-      // Lấy user từ token (đã được verify trong middleware)
-      const userId = req.user?.id || req.userId;
-      
-      if (!userId) {
-         return res.status(401).json({
-            EM: 'Unauthorized',
-            EC: '-1',
-            DT: '',
-         });
-      }
-      
-      let data = await loginRegisterService.getInforAccount(userId);
-      return res.status(200).json({
-         EM: data.EM,
-         EC: data.EC,
-         DT: data.DT,
-      });
-   } catch (error) {
-      console.log('Error at getAccount: ', error);
-      return res.status(500).json({
-         EM: 'Internal server error',
-         EC: '-1',
-         DT: '',
-      });
-   }
-};
 export default {
    handleRegister,
    handleLogin,
    getInforAccount,
    updateInforAccount,
-   getAccount,
 };

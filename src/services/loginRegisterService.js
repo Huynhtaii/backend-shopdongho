@@ -74,7 +74,6 @@ const handleLogin = async (rawData) => {
          };
       }
       const payload = {
-         id: user.user_id,
          email: user.email,
          name: user.name,
          role_id: user.role_id,
@@ -85,10 +84,8 @@ const handleLogin = async (rawData) => {
          EM: 'Login successfully',
          EC: '0',
          DT: {
-            id: user.user_id,
             email: user.email,
             name: user.name,
-            role_id: user.role_id,
             access_token: token,
          },
       };
@@ -106,7 +103,7 @@ const getInforAccount = async (id) => {
          where: {
             user_id: id,
          },
-         attributes: ['user_id', 'name', 'email', 'phone', 'address', 'role_id'],
+         attributes: ['name', 'email', 'phone', 'address'],
          include: [
             {
                model: db.Order,
