@@ -7,6 +7,7 @@ import { upload } from '../middleware/uploadImage';
 import roleCotroller from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
 import cartController from '../controller/cartController';
+import jwtAction from '../middleware/jwtAction';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -59,6 +60,8 @@ const initAPIRoutes = (app) => {
    router.post('/register', loginRegisterController.handleRegister);
    //API ĐĂNG NHẬP
    router.post('/login', loginRegisterController.handleLogin);
+   //API LẤY THÔNG TIN ACCOUNT (cần JWT token)
+   router.get('/account', jwtAction.checkUserJWT, loginRegisterController.getAccount);
    //API LẤY THÔNG TIN tài khoản NGƯỜI DÙNG
    router.get('/read/account-user/:id', loginRegisterController.getInforAccount);
    //update tài khoản người dùng
