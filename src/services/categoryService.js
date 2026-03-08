@@ -1,7 +1,9 @@
 import db from '../models';
 const getCatgeories = async () => {
    try {
-      const categories = await db.Category.findAll();
+      const categories = await db.Category.findAll({
+         include: [{ model: db.Product, attributes: ['product_id'] }],
+      });
       if (!categories) {
          return {
             EM: 'categories not found',

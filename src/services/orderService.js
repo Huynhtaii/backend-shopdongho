@@ -37,8 +37,10 @@ const getAllOrders = async () => {
          order: [['order_date', 'DESC']],
       });
 
-      // Tính toán thống kê
-      const totalRevenue = orders.reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
+      // Tính toán thống kê — chỉ tính doanh thu từ đơn đã hoàn thành
+      const totalRevenue = orders
+         .filter((order) => order.status === 'Completed')
+         .reduce((sum, order) => sum + parseFloat(order.total_amount), 0);
       const totalProducts = await db.Product.count();
 
       return {
