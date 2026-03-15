@@ -34,6 +34,12 @@ module.exports = (sequelize, DataTypes) => {
       address: DataTypes.TEXT,
       created_at: DataTypes.DATE,
       role_id: DataTypes.INTEGER,
+      resetToken: DataTypes.STRING,
+      resetTokenExpires: DataTypes.DATE,
+      status: {
+        type: DataTypes.ENUM('active', 'inactive'),
+        defaultValue: 'active'
+      },
     },
     {
       sequelize,

@@ -174,10 +174,40 @@ const deleteUser = async (id) => {
       };
    }
 };
+const toggleUserStatus = async (id) => {
+   try {
+      const user = await db.User.findByPk(id);
+      if (!user) {
+         return {
+            EM: 'User not found',
+            EC: '1',
+            DT: [],
+         };
+      }
+
+      user.status = user.status === 'active' ? 'inactive' : 'active';
+      await user.save();
+
+      return {
+         EM: `User ${user.status === 'active' ? 'activated' : 'deactivated'} successfully`,
+         EC: '0',
+         DT: user,
+      };
+   } catch (error) {
+      console.log(error);
+      return {
+         EM: 'Error from service toggle status',
+         EC: '-1',
+         DT: '',
+      };
+   }
+};
+
 export default {
    getAllUsers,
    getUserById,
    createUser,
    updateUser,
    deleteUser,
+   toggleUserStatus,
 };

@@ -204,7 +204,51 @@ const sendOrderStatusUpdate = async (toEmail, orderDetails, newStatus) => {
   }
 };
 
+const sendResetPasswordEmail = async (toEmail, resetLink) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: toEmail,
+      subject: "Đặt lại mật khẩu của bạn 🔑",
+      html: `
+            <html>
+            <head>
+              <style>
+                body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 0; margin: 0; }
+                .email-container { max-width: 600px; margin: 30px auto; background: #ffffff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); border-left: 5px solid #E41E26; }
+                h2 { text-align: center; color: #E41E26; }
+                p { font-size: 16px; color: #333; line-height: 1.6; }
+                .button-container { text-align: center; margin: 30px 0; }
+                .reset-button { background-color: #E41E26; color: #ffffff !important; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+                .footer { text-align: center; margin-top: 20px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 14px; color: #777; }
+              </style>
+            </head>
+            <body>
+              <div class="email-container">
+                <h2>Đặt lại mật khẩu</h2>
+                <p>Chào bạn,</p>
+                <p>Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Vui lòng nhấp vào nút bên dưới để tiến hành thay đổi mật khẩu:</p>
+                <div class="button-container">
+                  <a href="${resetLink}" class="reset-button">Đặt lại mật khẩu</a>
+                </div>
+                <p>Liên kết này sẽ hết hạn sau 1 giờ. Nếu bạn không yêu cầu thay đổi mật khẩu, bạn có thể bỏ qua email này.</p>
+                <div class="footer">
+                  Shop của chúng tôi | Hotline: 0123 456 789 | Email: support@shop.com
+                </div>
+              </div>
+            </body>
+            </html>
+          `
+    };
+    await transporter.sendMail(mailOptions);
+    console.log("✅ Email đặt lại mật khẩu đã được gửi!");
+  } catch (error) {
+    console.error("❌ Gửi email thất bại:", error);
+  }
+};
+
 module.exports = {
   sendOrderConfirmation,
-  sendOrderStatusUpdate
+  sendOrderStatusUpdate,
+  sendResetPasswordEmail
 };

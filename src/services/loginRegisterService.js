@@ -68,8 +68,15 @@ const handleLogin = async (rawData) => {
             EC: '1',
          };
       }
-      let checkPassword = bcrypt.compareSync(String(rawData.password), String(user.password));
-      if (checkPassword === false) {
+      if (user.status === 'inactive') {
+         return {
+            EM: 'Tài khoản của bạn đã bị vô hiệu hoá. Vui lòng liên hệ quản trị viên.',
+            EC: '1',
+            DT: '',
+         };
+      }
+      const isPasswordValid = bcrypt.compareSync(String(rawData.password), String(user.password));
+      if (isPasswordValid === false) {
          return {
             EM: 'Email or Password is incorrect', //trả ra chung chung như thế này để hacker không biết email hay password sai mà tập trung tấn công vào
             EC: '1',
@@ -207,9 +214,85 @@ const updateInforAccount = async (id, data) => {
    }
 };
 
+const forgotPassword = async (email) => {
+   try {
+      let user = await db.User.findOne({
+         where: { email: email },
+      });
+      if (!user) {
+         return {
+            EM: 'Email does not exist',
+            EC: '1',
+         };
+      }
+
+      const crypto = require('crypto');
+      const token = crypto.randomBytes(32).toString('hex');
+      const tokenExpires = new Date(Date.now() + 3600000); // 1 hour
+
+      user.resetToken = token;
+      user.resetTokenExpires = tokenExpires;
+      await user.save();
+
+      const emailService = require('./emailService');
+      const resetLink = `${process.env.REACT_URL}/reset-password/${token}`;
+      await emailService.sendResetPasswordEmail(email, resetLink);
+
+      return {
+         EM: 'Reset password email sent',
+         EC: '0',
+      };
+   } catch (error) {
+      console.log('Error at forgotPasswordService: ', error);
+      return {
+         EM: 'Error from service',
+         EC: '-2',
+      };
+   }
+};
+
+const resetPassword = async (token, newPassword) => {
+   try {
+      const { Op } = require('sequelize');
+      let user = await db.User.findOne({
+         where: {
+            resetToken: token,
+            resetTokenExpires: {
+               [Op.gt]: new Date(),
+            },
+         },
+      });
+
+      if (!user) {
+         return {
+            EM: 'Invalid or expired token',
+            EC: '1',
+         };
+      }
+
+      user.password = hashUserPassword(newPassword);
+      user.resetToken = null;
+      user.resetTokenExpires = null;
+      await user.save();
+
+      return {
+         EM: 'Password reset successfully',
+         EC: '0',
+      };
+   } catch (error) {
+      console.log('Error at resetPasswordService: ', error);
+      return {
+         EM: 'Error from service',
+         EC: '-2',
+      };
+   }
+};
+
 export default {
    handleRegister,
    handleLogin,
    getInforAccount,
    updateInforAccount,
+   forgotPassword,
+   resetPassword,
 };

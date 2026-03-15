@@ -150,11 +150,65 @@ const getAccount = async (req, res) => {
       },
    });
 };
+const handleForgotPassword = async (req, res) => {
+   try {
+      const { email } = req.body;
+      if (!email) {
+         return res.status(200).json({
+            EM: 'Please provide an email',
+            EC: '-1',
+            DT: '',
+         });
+      }
+      let data = await loginRegisterService.forgotPassword(email);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: '',
+      });
+   } catch (error) {
+      console.log('Error at handleForgotPassword: ', error);
+      return res.status(500).json({
+         EM: 'Internal server error',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
+
+const handleResetPassword = async (req, res) => {
+   try {
+      const { token, newPassword } = req.body;
+      if (!token || !newPassword) {
+         return res.status(200).json({
+            EM: 'Missing required fields',
+            EC: '-1',
+            DT: '',
+         });
+      }
+      let data = await loginRegisterService.resetPassword(token, newPassword);
+      return res.status(200).json({
+         EM: data.EM,
+         EC: data.EC,
+         DT: '',
+      });
+   } catch (error) {
+      console.log('Error at handleResetPassword: ', error);
+      return res.status(500).json({
+         EM: 'Internal server error',
+         EC: '-1',
+         DT: '',
+      });
+   }
+};
+
 export default {
    handleRegister,
    handleLogin,
    getInforAccount,
    updateInforAccount,
    handleLogout,
-   getAccount
+   getAccount,
+   handleForgotPassword,
+   handleResetPassword,
 };

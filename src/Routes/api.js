@@ -1,11 +1,12 @@
 import express from 'express';
 import userController from '../controller/userController';
+import statisticsController from '../controller/statisticsController';
 import productController from '../controller/productController';
 import categoryController from '../controller/categoryController';
 import orderController from '../controller/orderController';
 import { upload } from '../middleware/uploadImage';
 import { uploadCategory } from '../middleware/uploadCategoryImage';
-import roleCotroller from '../controller/roleController';
+import roleController from '../controller/roleController';
 import loginRegisterController from '../controller/loginRegisterController';
 import jwtAction from '../middleware/jwtAction';
 import cartController from '../controller/cartController';
@@ -42,6 +43,8 @@ const initAPIRoutes = (app) => {
    router.post('/register/user', loginRegisterController.handleRegister);
    router.post('/login/user', loginRegisterController.handleLogin);
    router.post('/logout/user', loginRegisterController.handleLogout);
+   router.post('/forgot-password', loginRegisterController.handleForgotPassword);
+   router.post('/reset-password', loginRegisterController.handleResetPassword);
 
    // USER PROTECTED ROUTES (cần JWT)
    router.get('/read/account-user/:id', jwtAction.checkUserJWT, loginRegisterController.getInforAccount);
@@ -92,7 +95,23 @@ const initAPIRoutes = (app) => {
    router.put('/update/order-status/:id', jwtAction.checkUserJWT, orderController.updateOrderStatus);
    router.delete('/delete/order/:id', jwtAction.checkUserJWT, orderController.deleteOrder);
 
-   router.get('/read-all/roles', jwtAction.checkUserJWT, roleCotroller.getAllRoles);
+   router.get('/read-all/roles', jwtAction.checkUserJWT, roleController.getAllRoles);
+
+   // Statistics
+   router.get(
+      '/statistics/detailed',
+      jwtAction.checkUserJWT,
+      jwtAction.checkUserPermission,
+      statisticsController.getDetailedStats,
+   );
+
+   // Toggle User Status
+   router.put(
+      '/user/toggle-status/:id',
+      jwtAction.checkUserJWT,
+      jwtAction.checkUserPermission,
+      userController.toggleUserStatus,
+   );
 
    // Brand Admin Routes
    router.post('/create/brand', jwtAction.checkUserJWT, brandController.createBrand);
