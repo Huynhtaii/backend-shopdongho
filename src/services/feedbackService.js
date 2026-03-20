@@ -2,11 +2,12 @@ import db from '../models';
 
 const createFeedback = async (data) => {
    try {
-      const { rating, comments, product_id, user_id, order_id } = data;
+      const { rating, comments, image, product_id, user_id, order_id } = data;
 
       const feedback = await db.Feedback.create({
          rating,
          comments: comments || '',
+         image: typeof image === 'string' ? image : null,
          product_id,
          user_id,
          order_id: order_id || null,

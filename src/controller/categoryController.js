@@ -2,7 +2,8 @@ import categoryService from '../services/categoryService';
 
 const getAllCategories = async (req, res) => {
    try {
-      let categories = await categoryService.getCatgeories();
+      const isAdmin = req.query.isAdmin === 'true';
+      let categories = await categoryService.getCatgeories(isAdmin);
       return res.status(200).json({
          EM: categories.EM,
          EC: categories.EC,

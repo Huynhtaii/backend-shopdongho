@@ -1,8 +1,13 @@
 import db from '../models';
 
-const getAllBrands = async () => {
+const getAllBrands = async (isAdmin = false) => {
    try {
+      let where = {};
+      if (!isAdmin) {
+         where.status = 1;
+      }
       const brands = await db.Brand.findAll({
+         where: where,
          include: [{ model: db.Product, as: 'products', attributes: ['product_id', 'name'] }],
          order: [['name', 'ASC']],
       });
@@ -68,9 +73,15 @@ const updateBrand = async (id, data) => {
 
 const deleteBrand = async (id) => {
    try {
-      const deleted = await db.Brand.destroy({ where: { brand_id: id } });
-      if (!deleted) return { EM: 'Brand not found', EC: '1', DT: null };
-      return { EM: 'Brand deleted', EC: '0', DT: null };
+      const brand = await db.Brand.findByPk(id);
+      if (!brand) return { EM: 'Brand not found', EC: '1', DT: null };
+      const newStatus = brand.status === 1 ? 0 : 1;
+      await brand.update({ status: newStatus });
+      return {
+         EM: newStatus === 1 ? 'Show brand successfully' : 'Hide brand successfully',
+         EC: '0',
+         DT: brand,
+      };
    } catch (error) {
       console.error('Delete brand error:', error);
       return { EM: 'Delete brand error', EC: '-1', DT: null };

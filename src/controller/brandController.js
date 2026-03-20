@@ -2,7 +2,8 @@ import brandService from '../services/brandService';
 
 const getAllBrands = async (req, res) => {
    try {
-      const data = await brandService.getAllBrands();
+      const isAdmin = req.query.isAdmin === 'true';
+      const data = await brandService.getAllBrands(isAdmin);
       return res.status(200).json(data);
    } catch (error) {
       return res.status(500).json({ EM: 'error from server', EC: '-1', DT: [] });

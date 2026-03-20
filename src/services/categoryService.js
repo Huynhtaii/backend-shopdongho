@@ -1,7 +1,12 @@
 import db from '../models';
-const getCatgeories = async () => {
+const getCatgeories = async (isAdmin = false) => {
    try {
+      let where = {};
+      if (!isAdmin) {
+         where.status = 1;
+      }
       const categories = await db.Category.findAll({
+         where: where,
          include: [{ model: db.Product, attributes: ['product_id'] }],
       });
       if (!categories) {
@@ -118,9 +123,7 @@ const updateCategory = async (id, data) => {
 };
 const deleteCategory = async (id) => {
    try {
-      const category = await db.Category.destroy({
-         where: { category_id: id },
-      });
+      const category = await db.Category.findByPk(id);
       if (!category) {
          return {
             EM: 'category not found',
@@ -128,12 +131,15 @@ const deleteCategory = async (id) => {
             DT: [],
          };
       }
+      const newStatus = category.status === 1 ? 0 : 1;
+      await category.update({ status: newStatus });
       return {
-         EM: 'delete category success',
-         EC: 0,
+         EM: newStatus === 1 ? 'Show category successfully' : 'Hide category successfully',
+         EC: '0',
          DT: category,
       };
    } catch (error) {
+      console.log(error);
       return {
          EM: 'error from service',
          EC: '-1',

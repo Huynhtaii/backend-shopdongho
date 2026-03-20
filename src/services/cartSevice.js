@@ -92,7 +92,7 @@ const createCartItem = async (user_id, data) => {
             cart_id: cart.cart_id, // Liên kết với giỏ hàng của user
             product_id: data.product_id,
             quantity: data.quantity || 1,
-            created_at: data.created_at,
+            created_at: data.created_at || new Date(),
          });
          return {
             EM: 'Item added to cart successfully',

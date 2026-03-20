@@ -27,7 +27,7 @@ const getAllOrders = async () => {
             {
                model: db.User,
                as: 'User', // Thêm alias cho User
-               attributes: ['user_id', 'name', 'email', 'phone'],
+               attributes: ['user_id', 'name', 'email', 'phone', 'address'],
             },
             {
                model: db.Payment,

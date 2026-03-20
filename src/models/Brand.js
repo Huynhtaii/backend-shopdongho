@@ -18,6 +18,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING(100),
             allowNull: false,
          },
+         status: {
+            type: DataTypes.TINYINT,
+            defaultValue: 1, // 1: Active, 0: Hidden
+         },
          description: {
             type: DataTypes.TEXT,
             allowNull: true,

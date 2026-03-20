@@ -4,7 +4,8 @@ const getAllProducts = async (req, res) => {
    const limit = req.query.limit;
 
    try {
-      let products = await productService.getAllProducts(limit);
+      const isAdmin = req.query.isAdmin === 'true';
+      let products = await productService.getAllProducts(limit, isAdmin);
       return res.status(200).json({
          EM: products.EM,
          EC: products.EC,

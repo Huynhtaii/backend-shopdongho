@@ -60,7 +60,7 @@ const initAPIRoutes = (app) => {
    // Order Routes
    router.post('/create/order', jwtAction.checkUserJWT, orderController.createOrder);
    router.put('/cancel/order/:id', jwtAction.checkUserJWT, orderController.cancelOrder);
-   router.post('/create/feedback', jwtAction.checkUserJWT, feedbackController.createFeedback);
+   router.post('/create/feedback', jwtAction.checkUserJWT, upload.single('image'), feedbackController.createFeedback);
 
    // ADMIN ROUTES
    router.get('/read-all/users', jwtAction.checkUserJWT, userController.getAllUsers);
@@ -75,6 +75,7 @@ const initAPIRoutes = (app) => {
       upload.array('images', 10),
       productController.updateProduct,
    );
+   router.get('/read/product', jwtAction.checkUserJWT, productController.getAllProducts);
    router.delete('/delete/product/:id', jwtAction.checkUserJWT, productController.deleteProduct);
 
    router.post(
@@ -89,6 +90,7 @@ const initAPIRoutes = (app) => {
       uploadCategory.single('image'),
       categoryController.updateCategory,
    );
+   router.get('/read/category', jwtAction.checkUserJWT, categoryController.getAllCategories);
    router.delete('/delete/category/:id', jwtAction.checkUserJWT, categoryController.deleteCategory);
 
    router.get('/read-all/orders', jwtAction.checkUserJWT, orderController.getAllOrders);
@@ -116,6 +118,7 @@ const initAPIRoutes = (app) => {
    // Brand Admin Routes
    router.post('/create/brand', jwtAction.checkUserJWT, brandController.createBrand);
    router.put('/update/brand/:id', jwtAction.checkUserJWT, brandController.updateBrand);
+   router.get('/read/brand', jwtAction.checkUserJWT, brandController.getAllBrands);
    router.delete('/delete/brand/:id', jwtAction.checkUserJWT, brandController.deleteBrand);
 
    return app.use('/api/v1/', router);

@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
             autoIncrement: true,
          },
          name: DataTypes.STRING(150),
+         status: {
+            type: DataTypes.TINYINT,
+            defaultValue: 1, // 1: Active, 0: Hidden
+         },
          description: DataTypes.TEXT,
          price: DataTypes.DECIMAL(10, 2),
          discount_price: DataTypes.DECIMAL(10, 2),

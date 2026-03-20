@@ -1,9 +1,15 @@
 import db from '../models';
 const { Op } = require('sequelize');
 
-const getAllProducts = async (limit) => {
+const getAllProducts = async (limit, isAdmin = false) => {
    try {
+      let where = {};
+      if (!isAdmin) {
+         where.status = 1;
+      }
+
       let options = {
+         where: where,
          include: [
             {
                model: db.ProductImage,
@@ -104,10 +110,11 @@ const getProductByCategories = async (name) => {
             },
             {
                model: db.Category,
-               where: { name: name },
+               where: { name: name, status: 1 },
                through: { attributes: [] },
             },
          ],
+         where: { status: 1 },
          limit: 10,
          order: [['created_at', 'DESC']],
       });
@@ -174,7 +181,7 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
       const whereCategory = catName !== 'all' ? { name: catName } : {};
 
       // Điều kiện lọc sản phẩm
-      let whereProduct = {};
+      let whereProduct = { status: 1 };
 
       if (filter?.price && filter.price !== 'all') {
          const priceS = filter.price.split('-');
@@ -201,8 +208,8 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
          include: [
             {
                model: db.Category,
-               ...(catName !== 'all' ? { where: whereCategory } : {}),
-               required: catName !== 'all',
+               where: { ...whereCategory, status: 1 },
+               required: true,
             },
             {
                model: db.ProductImage,
@@ -215,7 +222,7 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
 
       return {
          EM: 'Get all product successfully',
-         EC: 0,
+         EC: '0',
          DT: {
             totalRows: count,
             totalPages: Math.ceil(count / limit),
@@ -289,7 +296,7 @@ const createProduct = async (product) => {
 
       return {
          EM: 'Create product successfully',
-         EC: 0,
+         EC: '0',
          DT: result,
       };
    } catch (error) {
@@ -424,9 +431,7 @@ const updateProduct = async (id, data) => {
 };
 const deleteProduct = async (id) => {
    try {
-      const product = await db.Product.destroy({
-         where: { product_id: id },
-      });
+      const product = await db.Product.findByPk(id);
       if (!product) {
          return {
             EM: 'Product not found',
@@ -434,12 +439,17 @@ const deleteProduct = async (id) => {
             DT: [],
          };
       }
+      // Toggle status instead of destroying
+      const newStatus = product.status === 1 ? 0 : 1;
+      await product.update({ status: newStatus });
+
       return {
-         EM: 'Delete product successfully',
-         EC: 0,
+         EM: newStatus === 1 ? 'Show product successfully' : 'Hide product successfully',
+         EC: '0',
          DT: product,
       };
    } catch (error) {
+      console.log(error);
       return {
          EM: 'error from service',
          EC: '-1',
@@ -454,6 +464,7 @@ const searchProduct = async (name) => {
             name: {
                [Op.like]: `%${name}%`,
             },
+            status: 1,
          },
          include: [
             {
