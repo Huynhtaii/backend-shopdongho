@@ -7,7 +7,15 @@ const getAllProducts = async (limit, isAdmin = false) => {
       if (!isAdmin) {
          where.status = 1;
          // Hợp lệ nếu: (Sản phẩm không có brand) HOẶC (Brand không bị ẩn - status != 0)
-         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         // VÀ (Sản phẩm không có danh mục) HOẶC (Danh mục không bị ẩn - status != 0)
+         where[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }],
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }],
+            },
+         ];
       }
 
       let options = {
@@ -61,7 +69,14 @@ const getProductById = async (id, isAdmin = false) => {
    try {
       let where = {};
       if (!isAdmin) {
-         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         where[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }]
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }]
+            }
+         ];
       }
 
       const product = await db.Product.findByPk(id, {
@@ -81,6 +96,8 @@ const getProductById = async (id, isAdmin = false) => {
             {
                model: db.Feedback,
                as: 'Feedbacks',
+               where: isAdmin ? {} : { is_resolved: 0 },
+               required: false,
                include: [
                   {
                      model: db.User,
@@ -118,7 +135,14 @@ const getProductByCategories = async (name, isAdmin = false) => {
    try {
       let where = { status: 1 };
       if (!isAdmin) {
-         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         where[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }]
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }]
+            }
+         ];
       } else {
          where = {}; // Admin sees all
       }
@@ -179,7 +203,14 @@ const getResentProducts = async (arrId, isAdmin = false) => {
 
       let where = {};
       if (!isAdmin) {
-         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         where[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }]
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }]
+            }
+         ];
       }
 
       const products = await db.Product.findAll({
@@ -218,42 +249,49 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
 
       // Điều kiện lọc theo category (nếu không phải "all")
       const catName = categoryName || 'all';
-      const whereCategory = catName !== 'all' ? { name: catName } : {};
+      const whereCategory = catName !== 'all' ? { name: catName } : undefined;
 
       // Điều kiện lọc sản phẩm
       let whereProduct = {};
       if (!isAdmin) {
          whereProduct.status = 1;
-         whereProduct[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         whereProduct[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }],
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }],
+            },
+         ];
       }
 
       if (filter?.price && filter.price !== 'all') {
          const priceS = filter.price.split('-');
          if (priceS.length === 2) {
             whereProduct.price = {
-               [db.Sequelize.Op.between]: [parseInt(priceS[0]), parseInt(priceS[1])],
+               [Op.between]: [parseInt(priceS[0]), parseInt(priceS[1])],
             };
          } else {
             // Trường hợp "Trên 20 triệu" (chỉ có 1 giá trị)
             whereProduct.price = {
-               [db.Sequelize.Op.gte]: parseInt(priceS[0]),
+               [Op.gte]: parseInt(priceS[0]),
             };
          }
       }
 
       if (filter?.rating && filter.rating !== 'all') {
          whereProduct.rating = {
-            [db.Sequelize.Op.gte]: parseInt(filter.rating),
+            [Op.gte]: parseInt(filter.rating),
          };
       }
 
-      const { count, rows } = await db.Product.findAndCountAll({
+      const allMatches = await db.Product.findAll({
          where: whereProduct, // Áp dụng bộ lọc sản phẩm
          include: [
             {
                model: db.Category,
-               where: isAdmin ? whereCategory : { ...whereCategory, status: { [Op.ne]: 0 } },
-               required: true,
+               where: whereCategory,
+               required: catName !== 'all', // Không bắt buộc nếu là "all" để hiển thị cả sp không có danh mục
             },
             {
                model: db.ProductImage,
@@ -264,11 +302,12 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
                required: false,
             },
          ],
-         limit: limit,
-         offset: offset,
-         distinct: true,
-         subQuery: false, // Sửa lỗi Unknown column 'brand.brand_id'
+         subQuery: false,
+         order: [['created_at', 'DESC']]
       });
+
+      const count = allMatches.length;
+      const rows = allMatches.slice(offset, offset + limit);
 
       return {
          EM: 'Get all product successfully',
@@ -520,7 +559,14 @@ const searchProduct = async (name, isAdmin = false) => {
 
       if (!isAdmin) {
          where.status = 1;
-         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+         where[Op.and] = [
+            {
+               [Op.or]: [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }]
+            },
+            {
+               [Op.or]: [{ '$Categories.category_id$': null }, { '$Categories.status$': { [Op.ne]: 0 } }]
+            }
+         ];
       }
 
       const products = await db.Product.findAll({
@@ -529,6 +575,9 @@ const searchProduct = async (name, isAdmin = false) => {
             {
                model: db.ProductImage,
                attributes: ['url'],
+            },
+            {
+               model: db.Category,
             },
             {
                model: db.Brand,
