@@ -115,6 +115,11 @@ const initAPIRoutes = (app) => {
       userController.toggleUserStatus,
    );
 
+   // Feedback Admin Routes
+   router.get('/read-all/feedbacks', jwtAction.checkUserJWT, feedbackController.getAllFeedbacks);
+   router.get('/read/feedbacks/:product_id', jwtAction.checkUserJWT, feedbackController.getFeedbacksByProductId);
+   router.put('/update/feedback-status/:id', jwtAction.checkUserJWT, feedbackController.toggleFeedbackStatus);
+
    // Brand Admin Routes
    router.post('/create/brand', jwtAction.checkUserJWT, brandController.createBrand);
    router.put('/update/brand/:id', jwtAction.checkUserJWT, brandController.updateBrand);

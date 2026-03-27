@@ -247,9 +247,15 @@ const updateOrderStatus = async (id, status, paymentStatus) => {
          await order.update({ status });
       }
 
-      // Cập nhật trạng thái thanh toán nếu có
-      if (paymentStatus && order.Payment) {
-         await order.Payment.update({ status: paymentStatus });
+      // Cập nhật trạng thái thanh toán
+      if (paymentStatus) {
+         // Nếu có paymentStatus truyền lên thì dùng cái đó
+         if (order.Payment && order.Payment.status !== paymentStatus) {
+            await order.Payment.update({ status: paymentStatus });
+         }
+      } else if (status === 'Returned to shop' && order.Payment && order.Payment.status === 'Success') {
+         // Tự động chuyển sang RefundPending nếu chuyển sang Returned to shop
+         await order.Payment.update({ status: 'RefundPending' });
       }
 
       // Gửi email thông báo
