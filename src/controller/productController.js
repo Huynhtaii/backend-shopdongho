@@ -22,7 +22,8 @@ const getAllProducts = async (req, res) => {
 const getProductById = async (req, res) => {
    try {
       const { id } = req.params;
-      const product = await productService.getProductById(id);
+      const isAdmin = req.query.isAdmin === 'true';
+      const product = await productService.getProductById(id, isAdmin);
       return res.status(200).json({
          EM: product.EM,
          EC: product.EC,
@@ -39,7 +40,8 @@ const getProductById = async (req, res) => {
 const getProductByCategories = async (req, res) => {
    try {
       const { name } = req.params;
-      const products = await productService.getProductByCategories(name);
+      const isAdmin = req.query.isAdmin === 'true';
+      const products = await productService.getProductByCategories(name, isAdmin);
       return res.status(200).json({
          EM: products.EM,
          EC: products.EC,
@@ -57,8 +59,9 @@ const getProductByCategories = async (req, res) => {
 const getResentProducts = async (req, res) => {
    try {
       const arrId = req.query.arrId;
+      const isAdmin = req.query.isAdmin === 'true';
 
-      const recentProducts = await productService.getResentProducts(arrId || []);
+      const recentProducts = await productService.getResentProducts(arrId || [], isAdmin);
       return res.status(200).json({
          EM: recentProducts.EM,
          EC: recentProducts.EC,
@@ -79,9 +82,10 @@ const getProductByCategoriesWithPaginate = async (req, res) => {
       const limit = req.query.limit;
       const categoryName = req.query.categoryName;
       const filter = req.query.filter;
+      const isAdmin = req.query.isAdmin === 'true';
 
       if (page && limit) {
-         let data = await productService.getProductByCategoriesWithPaginate(+page, +limit, categoryName, filter);
+         let data = await productService.getProductByCategoriesWithPaginate(+page, +limit, categoryName, filter, isAdmin);
          return res.status(200).json({
             EM: data.EM,
             EC: data.EC,
@@ -200,7 +204,8 @@ const deleteProduct = async (req, res) => {
 };
 const searchProduct = async (req, res) => {
    try {
-      const { name } = req.query;
+      const { name, isAdmin } = req.query;
+      const isAdminFlag = isAdmin === 'true';
 
       if (!name) {
          return res.status(400).json({
@@ -210,7 +215,7 @@ const searchProduct = async (req, res) => {
          });
       }
 
-      const products = await productService.searchProduct(name);
+      const products = await productService.searchProduct(name, isAdminFlag);
 
       return res.status(200).json({
          EM: 'Search successful',

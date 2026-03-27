@@ -6,6 +6,8 @@ const getAllProducts = async (limit, isAdmin = false) => {
       let where = {};
       if (!isAdmin) {
          where.status = 1;
+         // Hợp lệ nếu: (Sản phẩm không có brand) HOẶC (Brand không bị ẩn - status != 0)
+         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
       }
 
       let options = {
@@ -21,8 +23,10 @@ const getAllProducts = async (limit, isAdmin = false) => {
                model: db.Brand,
                as: 'brand',
                attributes: ['brand_id', 'name', 'logo_url', 'country'],
+               required: false, // Phải là false để hiện sp không có brand
             },
          ],
+         subQuery: false, // Quan trọng: Để có thể filter theo cột của brand khi có limit
       };
 
       if (limit) {
@@ -53,8 +57,13 @@ const getAllProducts = async (limit, isAdmin = false) => {
    }
 };
 
-const getProductById = async (id) => {
+const getProductById = async (id, isAdmin = false) => {
    try {
+      let where = {};
+      if (!isAdmin) {
+         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+      }
+
       const product = await db.Product.findByPk(id, {
          include: [
             {
@@ -67,6 +76,7 @@ const getProductById = async (id) => {
                model: db.Brand,
                as: 'brand',
                attributes: ['brand_id', 'name', 'logo_url', 'country'],
+               required: false,
             },
             {
                model: db.Feedback,
@@ -79,6 +89,8 @@ const getProductById = async (id) => {
                ],
             },
          ],
+         where: where,
+         // findByPk không cần subQuery: false vì không có limit/offset phức tạp
       });
       if (!product) {
          return {
@@ -101,8 +113,16 @@ const getProductById = async (id) => {
       };
    }
 };
-const getProductByCategories = async (name) => {
+
+const getProductByCategories = async (name, isAdmin = false) => {
    try {
+      let where = { status: 1 };
+      if (!isAdmin) {
+         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+      } else {
+         where = {}; // Admin sees all
+      }
+
       const products = await db.Product.findAll({
          include: [
             {
@@ -110,13 +130,19 @@ const getProductByCategories = async (name) => {
             },
             {
                model: db.Category,
-               where: { name: name, status: 1 },
+               where: isAdmin ? { name } : { name, status: { [Op.ne]: 0 } },
                through: { attributes: [] },
             },
+            {
+               model: db.Brand,
+               as: 'brand',
+               required: false,
+            },
          ],
-         where: { status: 1 },
+         where: where,
          limit: 10,
          order: [['created_at', 'DESC']],
+         subQuery: false, // Sửa lỗi Unknown column 'brand.brand_id'
       });
       if (!products) {
          return {
@@ -140,7 +166,7 @@ const getProductByCategories = async (name) => {
    }
 };
 
-const getResentProducts = async (arrId) => {
+const getResentProducts = async (arrId, isAdmin = false) => {
    try {
       if (!Array.isArray(arrId)) {
          console.error('arrId không phải là một mảng hoặc bị undefined:', arrId);
@@ -151,8 +177,22 @@ const getResentProducts = async (arrId) => {
          };
       }
 
+      let where = {};
+      if (!isAdmin) {
+         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+      }
+
       const products = await db.Product.findAll({
-         include: [{ model: db.ProductImage }, { model: db.Category }],
+         include: [
+            { model: db.ProductImage },
+            { model: db.Category },
+            {
+               model: db.Brand,
+               as: 'brand',
+               required: false,
+            },
+         ],
+         where: where,
       });
 
       const recentProduct = products.filter((product) => arrId.includes(String(product.product_id)));
@@ -172,7 +212,7 @@ const getResentProducts = async (arrId) => {
    }
 };
 
-const getProductByCategoriesWithPaginate = async (page, limit, categoryName, filter) => {
+const getProductByCategoriesWithPaginate = async (page, limit, categoryName, filter, isAdmin = false) => {
    try {
       let offset = (page - 1) * limit;
 
@@ -181,7 +221,11 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
       const whereCategory = catName !== 'all' ? { name: catName } : {};
 
       // Điều kiện lọc sản phẩm
-      let whereProduct = { status: 1 };
+      let whereProduct = {};
+      if (!isAdmin) {
+         whereProduct.status = 1;
+         whereProduct[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+      }
 
       if (filter?.price && filter.price !== 'all') {
          const priceS = filter.price.split('-');
@@ -208,16 +252,22 @@ const getProductByCategoriesWithPaginate = async (page, limit, categoryName, fil
          include: [
             {
                model: db.Category,
-               where: { ...whereCategory, status: 1 },
+               where: isAdmin ? whereCategory : { ...whereCategory, status: { [Op.ne]: 0 } },
                required: true,
             },
             {
                model: db.ProductImage,
             },
+            {
+               model: db.Brand,
+               as: 'brand',
+               required: false,
+            },
          ],
          limit: limit,
          offset: offset,
          distinct: true,
+         subQuery: false, // Sửa lỗi Unknown column 'brand.brand_id'
       });
 
       return {
@@ -308,6 +358,7 @@ const createProduct = async (product) => {
       };
    }
 };
+
 const updateProduct = async (id, data) => {
    try {
       // Tìm product hiện có dựa theo id
@@ -429,6 +480,7 @@ const updateProduct = async (id, data) => {
       };
    }
 };
+
 const deleteProduct = async (id) => {
    try {
       const product = await db.Product.findByPk(id);
@@ -457,21 +509,34 @@ const deleteProduct = async (id) => {
       };
    }
 };
-const searchProduct = async (name) => {
+
+const searchProduct = async (name, isAdmin = false) => {
    try {
-      const products = await db.Product.findAll({
-         where: {
-            name: {
-               [Op.like]: `%${name}%`,
-            },
-            status: 1,
+      let where = {
+         name: {
+            [Op.like]: `%${name}%`,
          },
+      };
+
+      if (!isAdmin) {
+         where.status = 1;
+         where[Op.or] = [{ '$brand.brand_id$': null }, { '$brand.status$': { [Op.ne]: 0 } }];
+      }
+
+      const products = await db.Product.findAll({
+         where: where,
          include: [
             {
                model: db.ProductImage,
                attributes: ['url'],
             },
+            {
+               model: db.Brand,
+               as: 'brand',
+               required: false,
+            },
          ],
+         subQuery: false, // Sửa lỗi Unknown column 'brand.brand_id'
       });
 
       if (products.length === 0) {
