@@ -40,5 +40,77 @@ const createFeedback = async (data) => {
       return { EM: 'Lỗi từ service tạo đánh giá', EC: '-1', DT: '' };
    }
 };
+const getAllFeedbacks = async () => {
+   try {
+      const feedbacks = await db.Feedback.findAll({
+         include: [
+            {
+               model: db.User,
+               attributes: ['name', 'email', 'user_id'],
+            },
+            {
+               model: db.Product,
+               attributes: ['name', 'product_id'],
+               include: [{ model: db.ProductImage, attributes: ['url'] }],
+            },
+         ],
+         order: [['created_at', 'DESC']],
+      });
 
-export default { createFeedback };
+      return {
+         EM: 'Get all feedbacks successfully',
+         EC: '0',
+         DT: feedbacks,
+      };
+   } catch (error) {
+      console.log(error);
+      return { EM: 'Error from service get feedbacks', EC: '-1', DT: [] };
+   }
+};
+
+const toggleFeedbackStatus = async (id) => {
+   try {
+      const feedback = await db.Feedback.findByPk(id);
+      if (!feedback) {
+         return { EM: 'Feedback not found', EC: '1', DT: '' };
+      }
+
+      feedback.is_resolved = feedback.is_resolved === 1 ? 0 : 1;
+      await feedback.save();
+
+      return {
+         EM: feedback.is_resolved === 1 ? 'Đã ẩn đánh giá' : 'Đã hiện đánh giá',
+         EC: '0',
+         DT: feedback,
+      };
+   } catch (error) {
+      console.log(error);
+      return { EM: 'Error from service toggle feedback', EC: '-1', DT: '' };
+   }
+};
+
+const getFeedbacksByProductId = async (product_id) => {
+   try {
+      const feedbacks = await db.Feedback.findAll({
+         where: { product_id },
+         include: [
+            {
+               model: db.User,
+               attributes: ['name', 'email', 'user_id'],
+            },
+         ],
+         order: [['created_at', 'DESC']],
+      });
+
+      return {
+         EM: 'Get feedbacks by product success',
+         EC: '0',
+         DT: feedbacks,
+      };
+   } catch (error) {
+      console.log(error);
+      return { EM: 'Error from service get feedbacks by product', EC: '-1', DT: [] };
+   }
+};
+
+export default { createFeedback, getAllFeedbacks, toggleFeedbackStatus, getFeedbacksByProductId };

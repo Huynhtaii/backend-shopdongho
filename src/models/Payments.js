@@ -23,7 +23,7 @@ module.exports = (sequelize, DataTypes) => {
         "qr_code",
         "Bank Transfer"
       ),
-      status: DataTypes.ENUM("Success", "Failed", "Pending"),
+      status: DataTypes.ENUM("Success", "Failed", "Pending", "RefundPending", "Refunded"),
       order_id: DataTypes.INTEGER,
     },
     {

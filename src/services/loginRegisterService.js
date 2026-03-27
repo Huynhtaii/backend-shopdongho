@@ -131,6 +131,12 @@ const getInforAccount = async (id) => {
                         {
                            model: db.Product,
                            attributes: ['name', 'description', 'price', 'discount_price'],
+                           include: [
+                              {
+                                 model: db.ProductImage,
+                                 attributes: ['url'],
+                              },
+                           ],
                         },
                      ],
                   },
