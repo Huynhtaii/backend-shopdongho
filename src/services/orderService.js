@@ -244,18 +244,55 @@ const updateOrderStatus = async (id, status, paymentStatus) => {
 
       // Cập nhật trạng thái đơn hàng nếu có
       if (status && order.status !== status) {
+         // Không cho phép quay lại trạng thái trước đó nếu đã Canceled/Returned to shop
+         const finalStatuses = ['Canceled', 'Returned to shop'];
+         if (finalStatuses.includes(order.status) && status !== order.status) {
+            return {
+               EM: `Không thể thay đổi trạng thái đơn hàng đã ở bước cuối (${order.status})`,
+               EC: '1',
+               DT: [],
+            };
+         }
+         // Kiểm tra logic Yêu cầu hoàn trả
+         if (status === 'ReturnRequested' && order.status !== 'Completed') {
+            return {
+               EM: 'Chỉ có thể yêu cầu hoàn trả đối với đơn hàng đã hoàn thành',
+               EC: '1',
+               DT: [],
+            };
+         }
          await order.update({ status });
       }
 
       // Cập nhật trạng thái thanh toán
       if (paymentStatus) {
-         // Nếu có paymentStatus truyền lên thì dùng cái đó
+         // Quy tắc cho Refunded: Phải đi qua RefundPending nếu là đơn QR đã thanh toán
+         if (
+            paymentStatus === 'Refunded' &&
+            order.Payment?.status !== 'RefundPending' &&
+            order.Payment?.payment_method === 'qr_code'
+         ) {
+            return {
+               EM: 'Đơn hàng QR phải chuyển sang "Chờ hoàn tiền" trước khi xác nhận "Đã hoàn tiền"',
+               EC: '1',
+               DT: [],
+            };
+         }
          if (order.Payment && order.Payment.status !== paymentStatus) {
             await order.Payment.update({ status: paymentStatus });
          }
-      } else if (status === 'Returned to shop' && order.Payment && order.Payment.status === 'Success') {
-         // Tự động chuyển sang RefundPending nếu chuyển sang Returned to shop
-         await order.Payment.update({ status: 'RefundPending' });
+      } else {
+         // Tự động cập nhật trạng thái thanh toán dựa trên trạng thái đơn hàng
+         if (status === 'Completed' && order.Payment?.payment_method === 'cod') {
+            // COD: Hoàn thành đơn hàng -> Thành công
+            await order.Payment.update({ status: 'Success' });
+         } else if (
+            (status === 'Canceled' || status === 'Returned to shop') &&
+            order.Payment?.status === 'Success'
+         ) {
+            // Đã trả tiền (thanh toán thành công) + Hủy/Trả -> Chờ hoàn tiền
+            await order.Payment.update({ status: 'RefundPending' });
+         }
       }
 
       // Gửi email thông báo

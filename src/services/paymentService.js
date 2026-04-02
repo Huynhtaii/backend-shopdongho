@@ -17,12 +17,15 @@ const updatePayment = async (data) => {
       );
 
       // 2. Tạo order_items từ cartItems
-      const orderItems = data.cartItem.map((item) => ({
-         order_id: newOrder.order_id,
-         product_id: item.product_id,
-         quantity: item.quantity,
-         price: item.Product.discount_price || item.Product.price,
-      }));
+      const orderItems = data.cartItem.map((item) => {
+         const price = item.Product?.discount_price || item.Product?.price || 0;
+         return {
+            order_id: newOrder.order_id,
+            product_id: item.product_id,
+            quantity: item.quantity,
+            price: price,
+         };
+      });
 
       await db.OrderItem.bulkCreate(orderItems, { transaction });
 
@@ -50,11 +53,17 @@ const updatePayment = async (data) => {
       );
 
       await transaction.commit();
-      if (data.paymentMethod === 'cod') {
+
+      // Gửi email không chặn quy trình (dùng try-catch riêng)
+      try {
+         const nameProduct = data.cartItem
+            .map((item) => (item.Product?.name || 'Sản phẩm') + ' - Số Lượng: ' + item.quantity)
+            .join(', ');
+
          await emailService.sendOrderConfirmation(
             data.email,
             {
-               nameProduct: data.cartItem.map((item) => item.Product.name + ' - Số Lượng: ' + item.quantity),
+               nameProduct: nameProduct,
                order_id: newOrder.order_id,
                order_date: newOrder.order_date,
                total_amount: data.totalAmount,
@@ -62,19 +71,8 @@ const updatePayment = async (data) => {
             },
             data.paymentMethod,
          );
-      }
-      if (data.paymentMethod === 'qr_code') {
-         await emailService.sendOrderConfirmation(
-            data.email,
-            {
-               nameProduct: data.cartItem.map((item) => item.Product.name + ' - Số Lượng: ' + item.quantity),
-               order_id: newOrder.order_id,
-               order_date: newOrder.order_date,
-               total_amount: data.totalAmount,
-               status: 'Pending',
-            },
-            data.paymentMethod,
-         );
+      } catch (emailError) {
+         console.error('Lỗi khi gửi email xác nhận:', emailError);
       }
 
       return {
@@ -83,10 +81,10 @@ const updatePayment = async (data) => {
          DT: newOrder,
       };
    } catch (error) {
-      if (transaction) await transaction.rollback();
+      if (transaction && !transaction.finished) await transaction.rollback();
       console.error('Error in updatePayment:', error);
       return {
-         EM: 'Error processing payment',
+         EM: 'Error processing payment: ' + error.message,
          EC: -1,
          DT: null,
       };

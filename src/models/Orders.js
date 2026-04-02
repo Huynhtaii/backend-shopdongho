@@ -24,7 +24,7 @@ module.exports = (sequelize, DataTypes) => {
             autoIncrement: true,
          },
          order_date: DataTypes.DATE,
-         status: DataTypes.ENUM('Pending', 'Shipped', 'Completed', 'Canceled', 'FailedDelivery', 'Returned to shop'),
+         status: DataTypes.ENUM('Pending', 'Shipped', 'Completed', 'Canceled', 'FailedDelivery', 'Returned to shop', 'ReturnRequested'),
          total_amount: DataTypes.DECIMAL(10, 2),
          user_id: DataTypes.INTEGER,
          discount_id: DataTypes.INTEGER,
