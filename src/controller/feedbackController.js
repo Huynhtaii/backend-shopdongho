@@ -3,8 +3,10 @@ import feedbackService from '../services/feedbackService';
 const createFeedback = async (req, res) => {
    try {
       const data = req.body;
-      if (req.file) {
-         data.image = `${process.env.SERVER_URL}/uploads/product/${req.file.filename}`;
+      if (req.files && req.files.length > 0) {
+         data.image = req.files
+            .map((file) => `${process.env.SERVER_URL}/uploads/product/${file.filename}`)
+            .join(', ');
       } else {
          data.image = null;
       }

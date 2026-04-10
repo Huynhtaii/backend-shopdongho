@@ -48,7 +48,7 @@ const getDetailedStats = async (query = {}) => {
       }
 
       // 1. Revenue Stats
-      const revenueStats = await db.Order.findAll({
+      const rawRevenueStats = await db.Order.findAll({
          where: {
             status: 'Completed',
             order_date: {
@@ -60,6 +60,34 @@ const getDetailedStats = async (query = {}) => {
          order,
          raw: true,
       });
+
+      let revenueStats = rawRevenueStats;
+
+      // FILL GAPS for daily view
+      if (type === 'day') {
+         revenueStats = [];
+         for (let i = 0; i <= 30; i++) {
+            const date = new Date(startDate);
+            date.setDate(date.getDate() + i);
+            const d = date.getDate();
+            const m = date.getMonth() + 1;
+            const y = date.getFullYear();
+
+            const found = rawRevenueStats.find((s) => s.day === d && s.month === m && s.year === y);
+            revenueStats.push({
+               day: d,
+               month: m,
+               year: y,
+               revenue: found ? parseFloat(found.revenue) : 0,
+            });
+         }
+      } else {
+         // Ensure number format for other types
+         revenueStats = rawRevenueStats.map((s) => ({
+            ...s,
+            revenue: parseFloat(s.revenue) || 0,
+         }));
+      }
 
       const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const newUsersCount = await db.User.count({
@@ -81,10 +109,7 @@ const getDetailedStats = async (query = {}) => {
 
       // 4. Product Ratings (Top 5 and Bottom 5)
       const productRatings = await db.Feedback.findAll({
-         attributes: [
-            'product_id',
-            [fn('AVG', col('Feedback.rating')), 'avgRating'],
-         ],
+         attributes: ['product_id', [fn('AVG', col('Feedback.rating')), 'avgRating']],
          include: [
             {
                model: db.Product,
@@ -119,12 +144,27 @@ const getDetailedStats = async (query = {}) => {
          nest: true,
       });
 
+      // 6. Total Overall Revenue
+      const totalOverallRevenueResult = await db.Order.findAll({
+         where: { status: 'Completed' },
+         attributes: [[fn('SUM', col('total_amount')), 'total']],
+         raw: true,
+      });
+      const totalOverallRevenue = totalOverallRevenueResult[0]?.total || 0;
+
+      // 7. Total Completed Orders
+      const totalCompletedOrders = await db.Order.count({
+         where: { status: 'Completed' },
+      });
+
       return {
          EM: 'Get statistics success',
          EC: '0',
          DT: {
             revenueStats,
             type,
+            totalOverallRevenue,
+            totalCompletedOrders,
             newUsersThisMonth: newUsersCount,
             feedbackStats: feedbacks[0] || { avgRating: 0, totalFeedback: 0 },
             topRated,

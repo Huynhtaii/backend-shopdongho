@@ -20,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
          },
          rating: DataTypes.INTEGER,
          comments: DataTypes.TEXT,
-         image: DataTypes.STRING,
+         image: DataTypes.TEXT,
          created_at: DataTypes.DATE,
          is_resolved: DataTypes.TINYINT,
          product_id: DataTypes.INTEGER,

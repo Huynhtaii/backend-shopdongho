@@ -58,6 +58,11 @@ module.exports = (sequelize, DataTypes) => {
          case_size: DataTypes.STRING(50),
          case_thickness: DataTypes.STRING(50),
          utilities: DataTypes.TEXT,
+         stock: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 20,
+         },
       },
       {
          sequelize,

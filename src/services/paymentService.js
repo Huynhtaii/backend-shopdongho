@@ -12,6 +12,10 @@ const updatePayment = async (data) => {
             order_date: new Date(),
             total_amount: data.totalAmount,
             status: 'Pending',
+            shipping_name: data.shippingInfo?.name,
+            shipping_phone: data.shippingInfo?.phone,
+            shipping_email: data.shippingInfo?.email,
+            shipping_address: data.shippingInfo?.address,
          },
          { transaction },
       );
@@ -61,8 +65,9 @@ const updatePayment = async (data) => {
             .join(', ');
 
          await emailService.sendOrderConfirmation(
-            data.email,
+            data.shippingInfo?.email || data.email,
             {
+               customerName: data.shippingInfo?.name || 'Quý khách',
                nameProduct: nameProduct,
                order_id: newOrder.order_id,
                order_date: newOrder.order_date,

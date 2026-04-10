@@ -237,7 +237,7 @@ const updateOrderStatus = async (id, status, paymentStatus) => {
       if (!order) {
          return {
             EM: 'Order not found',
-            EC: '0',
+            EC: '1',
             DT: [],
          };
       }
@@ -265,7 +265,7 @@ const updateOrderStatus = async (id, status, paymentStatus) => {
       }
 
       // Cập nhật trạng thái thanh toán
-      if (paymentStatus) {
+      if (paymentStatus && paymentStatus !== 'undefined' && paymentStatus !== 'null') {
          // Quy tắc cho Refunded: Phải đi qua RefundPending nếu là đơn QR đã thanh toán
          if (
             paymentStatus === 'Refunded' &&

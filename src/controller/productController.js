@@ -125,6 +125,7 @@ const createProduct = async (req, res) => {
       product.discount_price = parseFloat(product.discount_price);
       product.rating = parseInt(product.rating);
       product.brand_id = parseInt(product.brand_id);
+      product.stock = parseInt(product.stock);
 
       // Gọi service để tạo sản phẩm
       const data = await productService.createProduct(product);
@@ -157,6 +158,7 @@ const updateProduct = async (req, res) => {
       if (product.rating) product.rating = parseInt(product.rating);
       if (product.brand_id) product.brand_id = parseInt(product.brand_id);
       if (product.category_id) product.category_id = parseInt(product.category_id);
+      if (product.stock) product.stock = parseInt(product.stock);
       if (product.keptImageIds) {
          try {
             product.keptImageIds = JSON.parse(product.keptImageIds);

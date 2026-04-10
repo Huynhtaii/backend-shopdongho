@@ -35,6 +35,7 @@ const getAllProducts = async (limit, isAdmin = false) => {
             },
          ],
          subQuery: false, // Quan trọng: Để có thể filter theo cột của brand khi có limit
+         order: [['created_at', 'DESC']],
       };
 
       if (limit) {
@@ -353,6 +354,7 @@ const createProduct = async (product) => {
                case_size: product.case_size,
                case_thickness: product.case_thickness,
                utilities: product.utilities,
+               stock: product.stock,
             },
             { transaction: t },
          );

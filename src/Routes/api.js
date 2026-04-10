@@ -15,6 +15,7 @@ import paymentController from '../controller/paymentController';
 import aiController from '../controller/aiController';
 import brandController from '../controller/brandController';
 import feedbackController from '../controller/feedbackController';
+import addressController from '../controller/addressController';
 const router = express.Router();
 
 const initAPIRoutes = (app) => {
@@ -60,7 +61,14 @@ const initAPIRoutes = (app) => {
    // Order Routes
    router.post('/create/order', jwtAction.checkUserJWT, orderController.createOrder);
    router.put('/cancel/order/:id', jwtAction.checkUserJWT, orderController.cancelOrder);
-   router.post('/create/feedback', jwtAction.checkUserJWT, upload.single('image'), feedbackController.createFeedback);
+   router.post('/create/feedback', jwtAction.checkUserJWT, upload.array('image', 10), feedbackController.createFeedback);
+
+   // Address Book Routes
+   router.get('/addresses/:user_id', jwtAction.checkUserJWT, addressController.getUserAddresses);
+   router.post('/addresses', jwtAction.checkUserJWT, addressController.createAddress);
+   router.put('/addresses/:id', jwtAction.checkUserJWT, addressController.updateAddress);
+   router.delete('/addresses/:id', jwtAction.checkUserJWT, addressController.deleteAddress);
+   router.put('/addresses/:id/set-default', jwtAction.checkUserJWT, addressController.setDefaultAddress);
 
    // ADMIN ROUTES
    router.get('/read-all/users', jwtAction.checkUserJWT, userController.getAllUsers);

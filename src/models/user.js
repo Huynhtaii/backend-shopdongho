@@ -18,6 +18,9 @@ module.exports = (sequelize, DataTypes) => {
       //chức năng chat 
       User.hasMany(models.Message, { foreignKey: "sender_id", as: "sentMessages" });
       User.hasMany(models.Message, { foreignKey: "receiver_id", as: "receivedMessages" });
+
+      // Address management
+      User.hasMany(models.ShippingAddress, { foreignKey: "user_id", as: "shippingAddresses" });
     }
   }
   User.init(
