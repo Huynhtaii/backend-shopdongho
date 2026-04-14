@@ -121,7 +121,16 @@ const getInforAccount = async (id) => {
                as: 'orders',
                separate: true,
                order: [['order_date', 'DESC']],
-               attributes: ['order_id', 'order_date', 'status', 'total_amount'],
+               attributes: [
+                  'order_id',
+                  'order_date',
+                  'status',
+                  'total_amount',
+                  'shipping_name',
+                  'shipping_phone',
+                  'shipping_email',
+                  'shipping_address',
+               ],
                include: [
                   {
                      model: db.OrderItem,

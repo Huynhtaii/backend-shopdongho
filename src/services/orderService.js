@@ -210,114 +210,138 @@ const updateOrder = async (id, data) => {
 };
 const updateOrderStatus = async (id, status, paymentStatus) => {
    try {
-      const order = await db.Order.findByPk(id, {
-         include: [
-            {
-               model: db.User,
-               as: 'User',
-               attributes: ['email', 'name'],
-            },
-            {
-               model: db.OrderItem,
-               as: 'order_items',
-               include: [
-                  {
-                     model: db.Product,
-                     as: 'Product',
-                     attributes: ['name'],
-                  },
-               ],
-            },
-            {
-               model: db.Payment,
-            },
-         ],
+      const result = await db.sequelize.transaction(async (t) => {
+         const order = await db.Order.findByPk(id, {
+            include: [
+               {
+                  model: db.User,
+                  as: 'User',
+                  attributes: ['email', 'name'],
+               },
+               {
+                  model: db.OrderItem,
+                  as: 'order_items',
+                  include: [
+                     {
+                        model: db.Product,
+                        as: 'Product',
+                        attributes: ['product_id', 'name', 'stock'],
+                     },
+                  ],
+               },
+               {
+                  model: db.Payment,
+               },
+            ],
+            transaction: t,
+         });
+
+         if (!order) {
+            throw new Error('Order not found');
+         }
+
+         const oldStatus = order.status;
+
+         // Cập nhật trạng thái đơn hàng nếu có
+         if (status && order.status !== status) {
+            // Không cho phép quay lại trạng thái trước đó nếu đã Canceled/Returned to shop
+            const finalStatuses = ['Canceled', 'Returned to shop'];
+            if (finalStatuses.includes(order.status) && status !== order.status) {
+               throw new Error(`Không thể thay đổi trạng thái đơn hàng đã ở bước cuối (${order.status})`);
+            }
+            // Kiểm tra logic Yêu cầu hoàn trả
+            if (status === 'ReturnRequested' && order.status !== 'Completed') {
+               throw new Error('Chỉ có thể yêu cầu hoàn trả đối với đơn hàng đã hoàn thành');
+            }
+
+            // Logic thay đổi STOCK
+            // 1. Giảm stock khi xác nhận đơn hàng (Pending -> Shipped)
+            if (oldStatus === 'Pending' && status === 'Shipped') {
+               for (const item of order.order_items) {
+                  if (item.Product) {
+                     await db.Product.decrement('stock', {
+                        by: item.quantity,
+                        where: { product_id: item.product_id },
+                        transaction: t,
+                     });
+                  }
+               }
+            }
+
+            // 2. Hoàn stock khi Hủy đơn hoặc Trả hàng (từ các trạng thái đã trừ kho)
+            const statusAlreadyReduced = ['Shipped', 'Completed', 'FailedDelivery', 'ReturnRequested'];
+            const statusToRestore = ['Canceled', 'Returned to shop'];
+            if (statusAlreadyReduced.includes(oldStatus) && statusToRestore.includes(status)) {
+               for (const item of order.order_items) {
+                  if (item.Product) {
+                     await db.Product.increment('stock', {
+                        by: item.quantity,
+                        where: { product_id: item.product_id },
+                        transaction: t,
+                     });
+                  }
+               }
+            }
+
+         await order.update({ status }, { transaction: t });
+         }
+
+         // Cập nhật trạng thái thanh toán
+         if (paymentStatus && paymentStatus !== 'undefined' && paymentStatus !== 'null') {
+            // Quy tắc cho Refunded: Phải đi qua RefundPending nếu là đơn QR đã thanh toán
+            if (
+               paymentStatus === 'Refunded' &&
+               order.Payment?.status !== 'RefundPending' &&
+               order.Payment?.payment_method === 'qr_code'
+            ) {
+               throw new Error('Đơn hàng QR phải chuyển sang "Chờ hoàn tiền" trước khi xác nhận "Đã hoàn tiền"');
+            }
+            if (order.Payment && order.Payment.status !== paymentStatus) {
+               await order.Payment.update({ status: paymentStatus }, { transaction: t });
+            }
+         } else {
+            // Tự động cập nhật trạng thái thanh toán dựa trên trạng thái đơn hàng
+            if (status === 'Completed' && order.Payment?.payment_method === 'cod') {
+               // COD: Hoàn thành đơn hàng -> Thành công
+               await order.Payment.update({ status: 'Success' }, { transaction: t });
+            } else if (
+               (status === 'Canceled' || status === 'Returned to shop') &&
+               order.Payment?.status === 'Success'
+            ) {
+               // Đã trả tiền (thanh toán thành công) + Hủy/Trả -> Chờ hoàn tiền
+               await order.Payment.update({ status: 'RefundPending' }, { transaction: t });
+            }
+         }
+
+         return order;
       });
 
-      if (!order) {
-         return {
-            EM: 'Order not found',
-            EC: '1',
-            DT: [],
-         };
-      }
-
-      // Cập nhật trạng thái đơn hàng nếu có
-      if (status && order.status !== status) {
-         // Không cho phép quay lại trạng thái trước đó nếu đã Canceled/Returned to shop
-         const finalStatuses = ['Canceled', 'Returned to shop'];
-         if (finalStatuses.includes(order.status) && status !== order.status) {
-            return {
-               EM: `Không thể thay đổi trạng thái đơn hàng đã ở bước cuối (${order.status})`,
-               EC: '1',
-               DT: [],
-            };
-         }
-         // Kiểm tra logic Yêu cầu hoàn trả
-         if (status === 'ReturnRequested' && order.status !== 'Completed') {
-            return {
-               EM: 'Chỉ có thể yêu cầu hoàn trả đối với đơn hàng đã hoàn thành',
-               EC: '1',
-               DT: [],
-            };
-         }
-         await order.update({ status });
-      }
-
-      // Cập nhật trạng thái thanh toán
-      if (paymentStatus && paymentStatus !== 'undefined' && paymentStatus !== 'null') {
-         // Quy tắc cho Refunded: Phải đi qua RefundPending nếu là đơn QR đã thanh toán
-         if (
-            paymentStatus === 'Refunded' &&
-            order.Payment?.status !== 'RefundPending' &&
-            order.Payment?.payment_method === 'qr_code'
-         ) {
-            return {
-               EM: 'Đơn hàng QR phải chuyển sang "Chờ hoàn tiền" trước khi xác nhận "Đã hoàn tiền"',
-               EC: '1',
-               DT: [],
-            };
-         }
-         if (order.Payment && order.Payment.status !== paymentStatus) {
-            await order.Payment.update({ status: paymentStatus });
-         }
-      } else {
-         // Tự động cập nhật trạng thái thanh toán dựa trên trạng thái đơn hàng
-         if (status === 'Completed' && order.Payment?.payment_method === 'cod') {
-            // COD: Hoàn thành đơn hàng -> Thành công
-            await order.Payment.update({ status: 'Success' });
-         } else if (
-            (status === 'Canceled' || status === 'Returned to shop') &&
-            order.Payment?.status === 'Success'
-         ) {
-            // Đã trả tiền (thanh toán thành công) + Hủy/Trả -> Chờ hoàn tiền
-            await order.Payment.update({ status: 'RefundPending' });
-         }
-      }
-
-      // Gửi email thông báo
-      if (order.User && order.User.email) {
+      // Gửi email thông báo SAU KHI transaction đã commit (Không await để trả về nhanh)
+      if (result && result.User && result.User.email) {
          const orderDetails = {
-            order_id: order.order_id,
-            nameProduct: order.order_items?.map((item) => item.Product?.name || 'Sản phẩm').join(', ') || 'Đơn hàng',
-            quantity: order.order_items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
-            order_date: order.order_date,
-            total_amount: order.total_amount,
-            status: status,
+            order_id: result.order_id,
+            nameProduct: result.order_items?.map((item) => item.Product?.name || 'Sản phẩm').join(', ') || 'Đơn hàng',
+            quantity: result.order_items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0,
+            order_date: result.order_date,
+            total_amount: result.total_amount,
+            status: status || result.status,
          };
 
-         await emailService.sendOrderStatusUpdate(order.User.email, orderDetails, status);
+         // Không await để không chặn response
+         emailService.sendOrderStatusUpdate(result.User.email, orderDetails, status || result.status).catch((err) => {
+            console.error('Lỗi khi gửi email thông báo trạng thái (background):', err);
+         });
       }
 
       return {
          EM: 'Update order status success',
          EC: '0',
-         DT: order,
+         DT: result,
       };
    } catch (error) {
       console.log(error);
       return {
-         EM: 'Error from service',
+         EM: error.message || 'Error from service',
          EC: '-1',
          DT: '',
       };
