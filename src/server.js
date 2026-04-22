@@ -14,7 +14,7 @@ const { Server } = require("socket.io");
 let app = express();
 let server = http.createServer(app); // Tạo server HTTP
 
-// Cấu hình view engine
+// Cấu hình view engine 
 configViewEngine(app);
 
 // Cấu hình CORS
