@@ -15,7 +15,7 @@ let app = express();
 let server = http.createServer(app); // Tạo server HTTP
 
 // Cấu hình view engine 
-configViewEngine(app);
+configViewEngine(app); 
 
 // Cấu hình CORS
 configCors(app);
