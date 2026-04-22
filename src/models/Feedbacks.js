@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
          // Liên kết với Order
          Feedback.belongsTo(models.Order, { foreignKey: 'order_id' });
       }
-   }
+   } 
    Feedback.init(
       {
          feedback_id: {
