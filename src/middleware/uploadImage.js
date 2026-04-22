@@ -4,7 +4,7 @@ import fs from 'fs';
 
 // Sử dụng đường dẫn tuyệt đối
 const uploadDir = path.join(__dirname, '..', 'uploads', 'product');
-if (!fs.existsSync(uploadDir)) {
+if (!fs.existsSync(uploadDir)) { 
    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
